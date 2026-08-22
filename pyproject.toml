@@ -30,7 +30,7 @@ select = [
     "N",  # pep8-naming
     "UP", # pyupgrade
 ]
-# ignore = ["E501"] # Line length handled by formatter
+ignore = ["I001"]  # Import sorting
 
 [tool.ruff.format]
 quote-style = "double"
