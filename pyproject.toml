@@ -1,0 +1,37 @@
+[project]
+name = "zenstream"
+version = "0.1.0"
+description = "ZenStream is a browser-based file explorer, viewer, analyser, visualiser and extractor"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit-mermaid",
+    "pandas",
+    "streamlit[pdf]",
+    "mutagen",
+    "pillow",
+    "openpyxl",
+    "python-docx",
+    "pyperclip",
+    "tabula-py",
+    "ruff",
+    "pre-commit",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # Pyflakes
+    "I",  # isort (import sorting)
+    "N",  # pep8-naming
+    "UP", # pyupgrade
+]
+# ignore = ["E501"] # Line length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

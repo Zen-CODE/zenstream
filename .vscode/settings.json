@@ -1,0 +1,15 @@
+{
+    "python.envFile": "${workspaceFolder}/.env",
+    "editor.rulers": [80],
+    "files.trimTrailingWhitespace": true,
+    "terminal.integrated.cwd": "${workspaceFolder}/streamlit",
+    "workbench.editor.enablePreview": false,
+    "files.watcherExclude": {
+        "**/venv": true
+      },
+      "workbench.colorCustomizations" : {
+        "terminal.foreground" : "#00BB55",
+        "terminal.background" : "#222222"
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:pyenv"
+}
