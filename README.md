@@ -1,4 +1,4 @@
-![Zen Stream](images/favicon.png)
+![Zen Stream](zenstream/images/favicon.png)
 # ZenStream
 
 
