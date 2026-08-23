@@ -13,19 +13,21 @@ from state import State
 from streamlit.delta_generator import DeltaGenerator
 
 from styler import NUM_COLUMNS, Styler
+from handlers.edit import EditFile
 
 
 class ZSLit:
     @staticmethod
     def header():
         with st.container():
-            # First row
             col1, col2 = st.columns([0.96, 0.04])
             col1.title("💧 ZenStream")
             col2.image("images/favicon.png")
             st.divider()
 
-            # Add folder breadcrumbs
+    @staticmethod
+    def add_path():
+        with st.container():
             ZSLit._add_path_buttons()
             st.divider()
 
@@ -156,7 +158,10 @@ class ZSLit:
     @staticmethod
     def _show_file_buttons(file_name: str):
         # Add buttons for Open, Copy, Delete and Clear
-        col1, col2, col3, col4, col5 = st.columns([0.5, 0.125, 0.125, 0.125, 0.125])
+        col1, col2, col3, col4, col5, col6 = st.columns(
+            [0.5, 0.125, 0.125, 0.125, 0.125, 0.125]
+        )
+
         with col1:
             st.info(f"Actions for: {file_name}")
         Styler.add_button(
@@ -171,14 +176,19 @@ class ZSLit:
             on_click=lambda *args: webbrowser.open(file_name),
             icon=":material/open_in_full:",
         )
+        col4.link_button(
+            "Edit",
+            f"/?file_name={file_name}",
+            icon=":material/edit:",
+        )
         Styler.add_button(
-            col4,
+            col5,
             "Delete",
             on_click=lambda *args: State.set("delete_file", file_name),
             icon=":material/delete:",
         )
         Styler.add_button(
-            col5,
+            col6,
             "Clear",
             on_click=lambda *args: State.set("current_file", ""),
             icon=":material/delete:",
@@ -204,12 +214,18 @@ class ZSLit:
     @staticmethod
     def show():
         ZSLit.header()
-        with st.spinner("Loading folder..."):
-            ZSLit.listing()
-            if file_name := State.get("current_file"):
-                with st.expander(f"💧💧💧 Current file: {file_name}", expanded=True):
-                    ZSLit.details(file_name)
-        ZSLit.show_footer()
+        if file_name := st.query_params.get("file_name"):
+            EditFile.edit_file(file_name)
+        else:
+            ZSLit.add_path()
+            with st.spinner("Loading folder..."):
+                ZSLit.listing()
+                if file_name := State.get("current_file"):
+                    with st.expander(
+                        f"💧💧💧 Current file: {file_name}", expanded=True
+                    ):
+                        ZSLit.details(file_name)
+            ZSLit.show_footer()
 
 
 if __name__ == "__main__":
