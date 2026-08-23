@@ -176,9 +176,10 @@ class ZSLit:
             on_click=lambda *args: webbrowser.open(file_name),
             icon=":material/open_in_full:",
         )
-        col4.link_button(
+        Styler.add_link_button(
+            col4,
             "Edit",
-            f"/?file_name={file_name}",
+            link=f"/?file_name={file_name}",
             icon=":material/edit:",
         )
         Styler.add_button(

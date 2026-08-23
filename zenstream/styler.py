@@ -39,6 +39,16 @@ class Styler:
             )
 
     @staticmethod
+    def add_link_button(
+        container: DeltaGenerator,
+        text: str,
+        icon: str,
+        link: str,
+    ):
+        with container:
+            st.link_button(text, link, icon=icon, width="stretch", key=str(uuid4()))
+
+    @staticmethod
     def show_dataframe(text: str, df: pd.DataFrame):
         st.subheader(text)
         st.data_editor(df, num_rows="dynamic", key=f"pdf_dataframe_{uuid4()}")
