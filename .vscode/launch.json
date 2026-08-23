@@ -12,7 +12,8 @@
             "module": "streamlit",
             "cwd": "${workspaceFolder}/zenstream",
             "args": [
-                "run", "main.py"
+                "run", "main.py", "--server.runOnSave", "true",
+                "--server.headless", "true"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

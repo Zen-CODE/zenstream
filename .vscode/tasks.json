@@ -1,0 +1,39 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "ruff-fix-main",
+			"type": "shell",
+			"command": "ruff",
+			"args": [
+				"check",
+				"--fix",
+				"zenstream/main.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$ruff"
+			]
+		},
+		{
+			"label": "ruff-check-actions",
+			"type": "shell",
+			"command": "ruff",
+			"args": [
+				"check",
+				"zenstream/actions.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "ruff-check-actions-verify",
+			"type": "shell",
+			"command": "ruff",
+			"args": [
+				"check",
+				"zenstream/actions.py"
+			],
+			"isBackground": false
+		}
+	]
+}
