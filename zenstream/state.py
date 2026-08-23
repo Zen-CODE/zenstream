@@ -26,10 +26,13 @@ class State:
     @staticmethod
     def load():
         if exists("state.json"):
-            with open("state.json") as f:
-                values = json.load(f)
-            for key, value in values.items():
-                setattr(st.session_state, key, value)
+            try:
+                with open("state.json") as f:
+                    values = json.load(f)
+                for key, value in values.items():
+                    setattr(st.session_state, key, value)
+            except Exception as e:
+                st.warning(f"Unable to load state.json...({e})")
 
     @staticmethod
     def save():
