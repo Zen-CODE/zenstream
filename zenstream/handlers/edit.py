@@ -4,7 +4,7 @@ import streamlit as st
 class EditFile:
     @staticmethod
     def _load_text(file_name: str) -> str:
-        """Load the file content into the state."""
+        """Load the file content into a string and return it."""
         try:
             with open(file_name, encoding="utf-8") as f:
                 return f.read()
