@@ -1,5 +1,7 @@
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
+from styler import Styler
+from actions import Action
 
 
 class EditFile:
@@ -25,6 +27,11 @@ class EditFile:
             container.warning(f"Unable to save the file...({e})")
 
     @staticmethod
+    def _run_file(file_name: str, container: DeltaGenerator) -> None:
+        """Run the specified file"""
+        container.info(f"Runnning file {file_name}")
+
+    @staticmethod
     def edit_file(file_name: str):
         """Display the file details."""
         with st.container():
@@ -35,7 +42,16 @@ class EditFile:
         text_area = st.text_area("Notes", value=text, height=600)
 
         with st.container():
-            col1, col2 = st.columns([0.25, 0.75])
-            col1.button(
-                "Save", on_click=lambda: EditFile._save_text(file_name, text_area, col2)
+            ext = file_name.split(".")[-1]
+            button_box = st.container()
+            output_box = st.container()
+            if ext in ["sh", "py"]:
+                button_box, col2 = button_box.columns([0.5, 0.5])
+                Styler.add_button(col2, "Run", Action.get_icon(file_name), on_click=lambda: EditFile._run_file(file_name, output_box)
+                )
+
+            Styler.add_button(
+                button_box, "Save", ":material/save:",
+                on_click=lambda: EditFile._save_text(
+                    file_name, text_area, output_box)
             )
