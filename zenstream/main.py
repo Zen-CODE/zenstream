@@ -231,7 +231,7 @@ class ZSLit:
 
 if __name__ == "__main__":
     st.set_page_config(
-        page_title="Zen Stream", page_icon="images/favicon.png", layout="wide"
+        page_title="ZenStream", page_icon="images/favicon.png", layout="wide"
     )
 
     State.load()
