@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from styler import Styler
 from actions import Action
+import subprocess
 
 
 class EditFile:
@@ -29,7 +30,26 @@ class EditFile:
     @staticmethod
     def _run_file(file_name: str, container: DeltaGenerator) -> None:
         """Run the specified file"""
-        container.info(f"Runnning file {file_name}")
+
+        with container.spinner(f"Running {file_name}"):
+            match file_name.split(".")[-1]:
+                case "sh":
+                    result = subprocess.run(
+                        ["sh", file_name], capture_output=True, text=True
+                    )
+                case "py":
+                    result = subprocess.run(
+                        ["python", file_name], capture_output=True, text=True
+                    )
+                case _:
+                    container.warning(f"Unrecognized file type: {file_name}")
+                    return
+            if result.returncode == 0:
+                container.markdown("**✅ Output**")
+                container.code(result.stdout)
+            else:
+                container.subheader("**⚠️ Error**")
+                container.code(result.stderr)
 
     @staticmethod
     def edit_file(file_name: str):
