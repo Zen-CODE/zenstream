@@ -206,9 +206,17 @@ class ZSLit:
 
 
 if __name__ == "__main__":
-    st.set_page_config(
-        page_title="ZenStream", page_icon="images/favicon.png", layout="wide"
-    )
+    if file_name := st.query_params.get("file_name"):
+        file_ending = Path(file_name).name
+        st.set_page_config(
+            page_title=f"{file_ending} - ZenStream",
+            page_icon="images/favicon.png",
+            layout="wide",
+        )
+    else:
+        st.set_page_config(
+            page_title="ZenStream", page_icon="images/favicon.png", layout="wide"
+        )
 
     State.load()
     ZSLit.show()
