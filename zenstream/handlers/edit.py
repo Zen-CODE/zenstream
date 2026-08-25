@@ -59,7 +59,7 @@ class EditFile:
             text = EditFile._load_text(file_name)
             col1.markdown("**Editing file**")
             col2.write(f"{file_name}")
-        text_area = st.text_area("Notes", value=text, height=600)
+        text_area = st.text_area("Notes", value=text, height=250)
 
         with st.container():
             ext = file_name.split(".")[-1]
