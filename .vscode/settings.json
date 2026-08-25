@@ -2,7 +2,7 @@
     "python.envFile": "${workspaceFolder}/.env",
     "editor.rulers": [80],
     "files.trimTrailingWhitespace": true,
-    "terminal.integrated.cwd": "${workspaceFolder}/streamlit",
+    "terminal.integrated.cwd": "${workspaceFolder}/zenstream",
     "workbench.editor.enablePreview": false,
     "files.watcherExclude": {
         "**/venv": true
