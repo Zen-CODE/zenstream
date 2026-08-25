@@ -33,7 +33,9 @@ class ZSLit:
 
     @staticmethod
     def _add_path_buttons():
-        folder = State.get("current_folder", str(Path.cwd()))
+        folder = State.get("current_folder")
+        if not (folder and Path(folder).exists()):
+            folder = str(Path.cwd())
         parts = folder.split(sep)[1:]
         num_folders = len(parts)
 
@@ -98,7 +100,9 @@ class ZSLit:
 
             return result
 
-        folder = State.get("current_folder", str(Path.cwd()))
+        folder = State.get("current_folder")
+        if not (folder and Path(folder).exists()):
+            folder = str(Path.cwd())
         with st.expander("💧💧 Folder contents", expanded=True):
             cols = st.columns(NUM_COLUMNS)
             file_list = sorted(listdir(folder))
