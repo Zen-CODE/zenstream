@@ -38,9 +38,9 @@ class ZSLit:
         num_folders = len(parts)
 
         cols = st.columns(num_folders + 2)  # Add root folder and info tag
-        cols[0].info(f"💧💧 Current folder: {folder}")
+        cols[0].info("💧💧 Current folder")
         cols[1].button(
-            "📁",
+            "📁/",
             key=str(uuid4()),
             width="stretch",
             on_click=partial(State.set, "current_folder", "/"),
