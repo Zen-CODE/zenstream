@@ -23,13 +23,11 @@ class ZSLit:
             col1, col2 = st.columns([0.96, 0.04])
             col1.title("💧 ZenStream")
             col2.image("images/favicon.png")
-            st.divider()
 
     @staticmethod
     def add_path():
         with st.container():
             ZSLit._add_path_buttons()
-            st.divider()
 
     @staticmethod
     def _add_path_buttons():
@@ -110,7 +108,6 @@ class ZSLit:
                         ZSLit._add_folder_button(cols[i], file_name, str(final_path))
                     else:
                         ZSLit._add_file_button(cols[i], file_name, folder)
-        st.divider()
 
     @staticmethod
     def _confirm_delete(file_name: str):
