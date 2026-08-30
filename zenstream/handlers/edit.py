@@ -3,6 +3,18 @@ from streamlit.delta_generator import DeltaGenerator
 from styler import Styler
 from actions import Action
 import subprocess
+from pathlib import Path
+
+
+class PythonHandler:
+    @staticmethod
+    def run(file_name: str):
+        """Run the Python file."""
+        file_path = Path(file_name).parent
+        st.info(f"Running {file_name} in {file_path}...")
+        return subprocess.run(
+            ["python", file_name], capture_output=True, text=True, cwd=file_path
+        )
 
 
 class EditFile:
@@ -38,9 +50,7 @@ class EditFile:
                         ["sh", file_name], capture_output=True, text=True
                     )
                 case "py":
-                    result = subprocess.run(
-                        ["python", file_name], capture_output=True, text=True
-                    )
+                    result = PythonHandler.run(file_name)
                 case _:
                     container.warning(f"Unrecognized file type: {file_name}")
                     return
@@ -54,12 +64,8 @@ class EditFile:
     @staticmethod
     def edit_file(file_name: str):
         """Display the file details."""
-        with st.container():
-            col1, col2 = st.columns([0.25, 0.75])
-            text = EditFile._load_text(file_name)
-            col1.markdown("**Editing file**")
-            col2.write(f"{file_name}")
-        text_area = st.text_area("Notes", value=text, height=250)
+        text = EditFile._load_text(file_name)
+        text_area = st.text_area(f"{file_name}", value=text, height=250)
 
         with st.container():
             ext = file_name.split(".")[-1]
