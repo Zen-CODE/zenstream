@@ -134,38 +134,34 @@ class ZenStream:
     @staticmethod
     def _show_file_buttons(file_name: str):
         # Add buttons for Open, Copy, Delete and Clear
-        col1, col2, col3, col4, col5, col6 = st.columns(
-            [0.5, 0.125, 0.125, 0.125, 0.125, 0.125]
-        )
+        col1, col2, col3, col4, col5 = st.columns([1] * 5)
 
-        with col1:
-            st.info(f"Actions for: {file_name}")
         Styler.add_button(
-            col2,
+            col1,
             "Copy path",
             on_click=lambda *args: pyperclip.copy(file_name),
             icon=":material/content_copy:",
         )
         Styler.add_button(
-            col3,
+            col2,
             "Open",
             on_click=lambda *args: webbrowser.open(file_name),
             icon=":material/open_in_full:",
         )
         Styler.add_link_button(
-            col4,
+            col3,
             "Edit",
             link=f"/?file_name={file_name}",
             icon=":material/edit:",
         )
         Styler.add_button(
-            col5,
+            col4,
             "Delete",
             on_click=lambda *args: State.set("delete_file", file_name),
             icon=":material/delete:",
         )
         Styler.add_button(
-            col6,
+            col5,
             "Clear",
             on_click=lambda *args: State.set("current_file", ""),
             icon=":material/delete:",
