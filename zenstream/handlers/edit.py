@@ -11,7 +11,6 @@ class PythonHandler:
     def run(file_name: str):
         """Run the Python file."""
         file_path = Path(file_name).parent
-        st.info(f"Running {file_name} in {file_path}...")
         return subprocess.run(
             ["python", file_name], capture_output=True, text=True, cwd=file_path
         )
@@ -51,6 +50,7 @@ class EditFile:
                     )
                 case "py":
                     result = PythonHandler.run(file_name)
+                    print(f"Ran : results - {result}")
                 case _:
                     container.warning(f"Unrecognized file type: {file_name}")
                     return
