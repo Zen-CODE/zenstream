@@ -16,20 +16,18 @@ from styler import NUM_COLUMNS, Styler
 from handlers.edit import EditFile
 
 
-class ZSLit:
+class ZenStream:
     @staticmethod
     def header():
         with st.container():
             col1, col2 = st.columns([0.96, 0.04])
             col1.title("💧 ZenStream")
             col2.image("images/favicon.png")
-            st.divider()
 
     @staticmethod
     def add_path():
         with st.container():
-            ZSLit._add_path_buttons()
-            st.divider()
+            ZenStream._add_path_buttons()
 
     @staticmethod
     def _add_path_buttons():
@@ -40,9 +38,9 @@ class ZSLit:
         num_folders = len(parts)
 
         cols = st.columns(num_folders + 2)  # Add root folder and info tag
-        cols[0].info(f"💧💧 Current folder: {folder}")
+        cols[0].info("💧💧 Current folder")
         cols[1].button(
-            "📁",
+            "📁/",
             key=str(uuid4()),
             width="stretch",
             on_click=partial(State.set, "current_folder", "/"),
@@ -111,10 +109,11 @@ class ZSLit:
                 for file_name in column:
                     final_path = Path(join(folder, file_name))
                     if final_path.is_dir():
-                        ZSLit._add_folder_button(cols[i], file_name, str(final_path))
+                        ZenStream._add_folder_button(
+                            cols[i], file_name, str(final_path)
+                        )
                     else:
-                        ZSLit._add_file_button(cols[i], file_name, folder)
-        st.divider()
+                        ZenStream._add_file_button(cols[i], file_name, folder)
 
     @staticmethod
     def _confirm_delete(file_name: str):
@@ -139,38 +138,34 @@ class ZSLit:
     @staticmethod
     def _show_file_buttons(file_name: str):
         # Add buttons for Open, Copy, Delete and Clear
-        col1, col2, col3, col4, col5, col6 = st.columns(
-            [0.5, 0.125, 0.125, 0.125, 0.125, 0.125]
-        )
+        col1, col2, col3, col4, col5 = st.columns([1] * 5)
 
-        with col1:
-            st.info(f"Actions for: {file_name}")
         Styler.add_button(
-            col2,
+            col1,
             "Copy path",
             on_click=lambda *args: pyperclip.copy(file_name),
             icon=":material/content_copy:",
         )
         Styler.add_button(
-            col3,
+            col2,
             "Open",
             on_click=lambda *args: webbrowser.open(file_name),
             icon=":material/open_in_full:",
         )
         Styler.add_link_button(
-            col4,
+            col3,
             "Edit",
             link=f"/?file_name={file_name}",
             icon=":material/edit:",
         )
         Styler.add_button(
-            col5,
+            col4,
             "Delete",
             on_click=lambda *args: State.set("delete_file", file_name),
             icon=":material/delete:",
         )
         Styler.add_button(
-            col6,
+            col5,
             "Clear",
             on_click=lambda *args: State.set("current_file", ""),
             icon=":material/delete:",
@@ -179,8 +174,8 @@ class ZSLit:
     @staticmethod
     def details(file_name):
         if del_file := State.get("delete_file"):
-            ZSLit._confirm_delete(del_file)
-        ZSLit._show_file_buttons(file_name)
+            ZenStream._confirm_delete(del_file)
+        ZenStream._show_file_buttons(file_name)
 
         for handler in Action.get_handlers(file_name):
             handler.show_file(file_name)
@@ -194,19 +189,19 @@ class ZSLit:
 
     @staticmethod
     def show():
-        ZSLit.header()
+        ZenStream.header()
         if file_name := st.query_params.get("file_name"):
             EditFile.edit_file(file_name)
         else:
-            ZSLit.add_path()
+            ZenStream.add_path()
             with st.spinner("Loading folder..."):
-                ZSLit.listing()
+                ZenStream.listing()
                 if file_name := State.get("current_file"):
                     with st.expander(
                         f"💧💧💧 Current file: {file_name}", expanded=True
                     ):
-                        ZSLit.details(file_name)
-            ZSLit.show_footer()
+                        ZenStream.details(file_name)
+            ZenStream.show_footer()
 
 
 if __name__ == "__main__":
@@ -223,4 +218,4 @@ if __name__ == "__main__":
         )
 
     State.load()
-    ZSLit.show()
+    ZenStream.show()
