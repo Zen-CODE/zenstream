@@ -67,22 +67,21 @@ class EditFile:
         text = EditFile._load_text(file_name)
         text_area = st.text_area(f"{file_name}", value=text, height=250)
 
-        with st.container():
-            ext = file_name.split(".")[-1]
-            button_box = st.container()
-            output_box = st.container()
-            if ext in ["sh", "py"]:
-                button_box, col2 = button_box.columns([0.5, 0.5])
-                Styler.add_button(
-                    col2,
-                    "Run",
-                    Action.get_icon(file_name),
-                    on_click=lambda: EditFile._run_file(file_name, output_box),
-                )
-
+        ext = file_name.split(".")[-1]
+        button_box = st.container()
+        output_box = st.container()
+        if ext in ["sh", "py"]:
+            button_box, col2 = button_box.columns([0.5, 0.5])
             Styler.add_button(
-                button_box,
-                "Save",
-                ":material/save:",
-                on_click=lambda: EditFile._save_text(file_name, text_area, output_box),
+                col2,
+                "Run",
+                Action.get_icon(file_name),
+                on_click=lambda: EditFile._run_file(file_name, output_box),
             )
+
+        Styler.add_button(
+            button_box,
+            "Save",
+            ":material/save:",
+            on_click=lambda: EditFile._save_text(file_name, text_area, output_box),
+        )
