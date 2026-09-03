@@ -26,37 +26,32 @@ class ZenStream:
 
     @staticmethod
     def add_path():
-        with st.container():
-            ZenStream._add_path_buttons()
-
-    @staticmethod
-    def _add_path_buttons():
         folder = State.get("current_folder")
         if not (folder and Path(folder).exists()):
             folder = str(Path.cwd())
         parts = folder.split(sep)[1:]
         num_folders = len(parts)
 
-        cols = st.columns(num_folders + 2)  # Add root folder and info tag
-        cols[0].info("💧💧 Current folder")
-        cols[1].button(
-            "📁/",
-            key=str(uuid4()),
-            width="stretch",
-            on_click=partial(State.set, "current_folder", "/"),
-        )
-        if num_folders == 1 and parts[0] == "":
-            return
-
-        dest_folder = ""
-        for i in range(num_folders):
-            dest_folder = dest_folder + sep + parts[i]
-            cols[i + 2].button(
-                "📁 " + parts[i],
+        with st.expander(f"💧 Folder - {folder}", expanded=True):
+            cols = st.columns(num_folders + 1)  # Add root folder and info tag
+            cols[0].button(
+                "📁/",
                 key=str(uuid4()),
                 width="stretch",
-                on_click=partial(State.set, "current_folder", dest_folder),
+                on_click=partial(State.set, "current_folder", "/"),
             )
+            if num_folders == 1 and parts[0] == "":
+                return
+
+            dest_folder = ""
+            for i in range(num_folders):
+                dest_folder = dest_folder + sep + parts[i]
+                cols[i + 1].button(
+                    "📁 " + parts[i],
+                    key=str(uuid4()),
+                    width="stretch",
+                    on_click=partial(State.set, "current_folder", dest_folder),
+                )
 
     @staticmethod
     def _add_folder_button(container: DeltaGenerator, text: str, folder: str):
