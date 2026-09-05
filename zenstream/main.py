@@ -47,7 +47,7 @@ class ZenStream:
             for i in range(num_folders):
                 dest_folder = dest_folder + sep + parts[i]
                 cols[i + 1].button(
-                    "📁 " + parts[i],
+                    "📁 " + parts[i] + ("" if i < num_folders - 1 else " 🟢"),
                     key=str(uuid4()),
                     width="stretch",
                     on_click=partial(State.set, "current_folder", dest_folder),
