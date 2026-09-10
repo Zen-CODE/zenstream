@@ -4,6 +4,7 @@ from styler import Styler
 from actions import Action
 import subprocess
 from pathlib import Path
+from utils import get_ext
 
 
 class PythonHandler:
@@ -43,7 +44,7 @@ class EditFile:
         """Run the specified file"""
 
         with container.spinner(f"Running {file_name}"):
-            match file_name.split(".")[-1]:
+            match get_ext(file_name):
                 case "sh":
                     result = subprocess.run(
                         ["sh", file_name], capture_output=True, text=True
@@ -65,7 +66,7 @@ class EditFile:
     def edit_file(file_name: str):
         """Display the file details."""
         text = EditFile._load_text(file_name)
-        ext = file_name.split(".")[-1]
+        ext = get_ext(file_name)
         button_box = st.container()
         output_box = st.container()
 

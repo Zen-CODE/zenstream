@@ -13,6 +13,7 @@ from handlers.pdfviewer import PDFViewer
 from handlers.textviewer import TextViewer
 from handlers.videoplayer import VideoPlayer
 from state import State
+from utils import get_ext
 
 
 class Action:
@@ -36,42 +37,37 @@ class Action:
     """A dictionary of file type / handler class list pairs. The handler class
     exposing a `show_file(file_name)` method."""
 
+    _ICONS: dict[str, list[str]] = {
+        ":material/audio_file:": ["mp3", "ogg", "wav"],
+        ":material/csv:": ["csv"],
+        ":material/text_snippet:": ["txt", "md"],
+        ":material/code:": ["py"],
+        ":material/settings:": ["ini", "yaml", "yml", "json", "toml"],
+        ":material/run_circle:": ["bat", "sh"],
+        ":material/picture_as_pdf:": ["pdf"],
+        ":material/image:": ["jpeg", "jpg", "png"],
+        ":material/movie:": ["webm", "mp4", "avi"],
+        ":material/table:": ["xls", "xlsx"],
+        ":material/history_toggle_off:": ["log"],
+        ":material/dictionary:": ["docx"],
+    }
+    """Reverse-lookup mapping: icon → list of extensions."""
+
+    _EXT_ICON: dict[str, str] = {
+        ext: icon for icon, exts in _ICONS.items() for ext in exts
+    }
+    """Flat ext → icon lookup, derived from _ICONS."""
+
     @staticmethod
     def get_handlers(file_name: str) -> list:
         """Return the handler for the file, defaulting to a text viewer."""
-        ext = file_name.split(".")[-1]
+        ext = get_ext(file_name)
         return Action.handlers.get(ext, [TextViewer])
 
     @staticmethod
     def get_icon(file_name: str) -> str:
-        suffix = file_name.split(".")[-1]
-        match suffix:
-            case "mp3" | "ogg" | "wav":
-                return ":material/audio_file:"
-            case "csv":
-                return ":material/csv:"
-            case "txt" | "md":
-                return ":material/text_snippet:"
-            case "py":
-                return ":material/code:"
-            case "ini" | "yaml" | "yml" | "json" | "toml":
-                return ":material/settings:"
-            case "bat" | "sh":
-                return ":material/run_circle:"
-            case "pdf":
-                return ":material/picture_as_pdf:"
-            case "jpeg" | "jpg" | "png":
-                return ":material/image:"
-            case "webm" | "mp4" | "avi":
-                return ":material/movie:"
-            case "xls" | "xlsx":
-                return ":material/table:"
-            case "log":
-                return ":material/history_toggle_off:"
-            case "docx":
-                return ":material/dictionary:"
-            case _:
-                return ":material/article:"
+        """Return a Streamlit material icon string for the given file."""
+        return Action._EXT_ICON.get(get_ext(file_name), ":material/article:")
 
     @staticmethod
     def delete_file(file_name: str):
@@ -87,7 +83,7 @@ class Action:
     def run_file(file_name: str):
         """Run the given file. Currently, only python files are supported."""
         print(f"Running {file_name}")
-        match file_name.split(".")[-1].lower():
+        match get_ext(file_name):
             case "py":
                 PythonFile.run(file_name)
             case _:

@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from styler import Styler
+from utils import get_ext
 
 
 class TextViewer:
@@ -24,7 +25,7 @@ class TextViewer:
             st.warning(f"Unable to read as a text file...({e})")
             return
 
-        match file_name.split(".")[-1].lower():
+        match get_ext(file_name):
             case "md":
                 st.code(
                     lines,

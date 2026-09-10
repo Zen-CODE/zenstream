@@ -6,6 +6,7 @@ from mutagen import File
 from mutagen.easyid3 import EasyID3
 
 from styler import Styler
+from utils import get_ext
 
 
 class AudioPlayer:
@@ -35,7 +36,7 @@ class AudioPlayer:
         }
         Styler.show_dict("Track Metadata", data)
 
-        if file_name.split(".")[-1].lower() == "mp3":
+        if get_ext(file_name) == "mp3":
             data = AudioPlayer.get_id3_dict(file_name)
             if data:
                 Styler.show_dict("ID3 Tag", data)
@@ -49,7 +50,7 @@ class AudioPlayer:
         st.header("Audio Player")
         st.audio(file_name, autoplay=True)
 
-        if file_name.lower().endswith(".mp3"):
+        if get_ext(file_name) == "mp3":
             st.markdown("**Metadata**")
             AudioPlayer._show_meta(file_name)
             AudioPlayer._show_cover(file_name)
