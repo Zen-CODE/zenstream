@@ -15,12 +15,10 @@ from utils import get_ext
 
 class PythonHandler:
     @staticmethod
-    def find_env_file(start_path: Path) -> Path | None:
+    def _find_env_file(file_path: Path) -> Path | None:
         """Search current and parent folders until a .env or .env.local file
         is found and return its path, or None if not found."""
-        current = start_path.resolve()
-        if current.is_file():
-            current = current.parent
+        current = file_path.parent
 
         for directory in [current, *current.parents]:
             for name in [".env", ".env.local"]:
@@ -30,11 +28,11 @@ class PythonHandler:
         return None
 
     @staticmethod
-    def parse_env_file(path: Path) -> dict[str, str]:
+    def parse_env_file(file_path: Path) -> dict[str, str]:
         """Parse a .env / .env.local file into a dictionary."""
         env_vars: dict[str, str] = {}
         try:
-            with open(path, encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#"):
@@ -52,18 +50,36 @@ class PythonHandler:
                             val = val[1:-1]
                         env_vars[key] = val
         except Exception as e:
-            st.warning(f"Error reading env file {path}: {e}")
+            st.warning(f"Error reading env file {file_path}: {e}")
         return env_vars
 
     @staticmethod
-    def get_environment(file_name: str, load_env: bool = True) -> tuple[dict[str, str]]:
+    def _get_environment(
+        file_path: Path, load_env: bool = True
+    ) -> tuple[dict[str, str]]:
         """Return the current evironment, along with any loaded env files."""
         env = os.environ.copy()
         if load_env:
-            env_file = PythonHandler.find_env_file(Path(file_name).parent)
+            env_file = PythonHandler._find_env_file(file_path.parent)
             if env_file:
-                env.update(PythonHandler.parse_env_file(env_file))
+                env.update(PythonHandler._parse_env_file(env_file))
         return env
+
+    @staticmethod
+    def _get_venv(file_path: Path) -> Path | None:
+        """Return the path to the virtual env executable or None."""
+        current = file_path.parent
+        for directory in [current, *current.parents]:
+            for name in [".env", ".venv"]:
+                candidate = directory / name
+                if candidate.is_dir():
+                    if sys.platform == "win32":
+                        python_bin = candidate / "Scripts" / "python.exe"
+                    else:
+                        python_bin = candidate / "bin" / "python"
+                    if python_bin.exists():
+                        return python_bin
+        return None
 
     @staticmethod
     def _launch_terminal(
@@ -118,27 +134,32 @@ class PythonHandler:
             return subprocess.Popen(term_cmd, cwd=cwd, env=env)
 
     @staticmethod
-    def _run(file_name: str, env: dict[str, str] | None = None):
+    def _run(file_path: Path, env: dict[str, str] | None = None):
         """Run the Python file capturing output."""
-        resolved_path = Path(file_name).resolve()
-        file_path = resolved_path.parent
-        python_bin = sys.executable or "python3"
+        python_bin = PythonHandler._get_python_binary(file_path)
         return subprocess.run(
-            [python_bin, str(resolved_path)],
+            [python_bin, str(file_path)],
             capture_output=True,
             text=True,
-            cwd=file_path,
+            cwd=file_path.parent,
             env=env,
         )
 
     @staticmethod
-    def _run_in_terminal(file_name: str, env: dict[str, str] | None = None):
+    def _get_python_binary(file_path: Path) -> Path | None:
+        """Return the appropriate python binary to run"""
+        python_bin = None  # PythonHandler._get_venv(file_path)
+        if not python_bin:
+            return sys.executable or "python3"
+        return python_bin
+
+    @staticmethod
+    def _run_in_terminal(file_path: Path, env: dict[str, str] | None = None):
         """Run the Python file in a new terminal window."""
-        file_path = Path(file_name).resolve().parent
-        python_bin = sys.executable or "python3"
+        python_bin = PythonHandler._get_python_binary(file_path)
         return PythonHandler._launch_terminal(
-            [python_bin, str(Path(file_name).resolve())],
-            cwd=file_path,
+            [python_bin, str(file_path)],
+            cwd=file_path.parent,
             env=env,
         )
 
@@ -175,18 +196,19 @@ class PythonHandler:
         new_terminal: bool = False,
     ) -> None:
         """Run the specified python file."""
-        env = PythonHandler.get_environment(file_name, load_env=load_env)
+        file_path = Path(file_name).resolve()
+        env = PythonHandler._get_environment(file_path, load_env=load_env)
 
         if new_terminal:
             try:
-                PythonHandler._run_in_terminal(file_name, env=env)
-                container.success(f"Launched {Path(file_name).name} in a new terminal.")
+                PythonHandler._run_in_terminal(file_path, env=env)
+                container.success(f"Launched {file_path.name} in a new terminal.")
             except Exception as e:
                 container.error(f"Failed to launch in new terminal: {e}")
             return
         else:
-            with container.spinner(f"Running {file_name}"):
-                result = PythonHandler._run(file_name, env=env)
+            with container.spinner(f"Running {file_path}"):
+                result = PythonHandler._run(file_path, env=env)
                 print(f"Ran : results - {result}")
                 if result.returncode == 0:
                     container.markdown("**✅ Output**")
@@ -200,15 +222,13 @@ class PythonHandler:
 
 class ShellHandler:
     @staticmethod
-    def _run(file_name: str):
+    def _run(file_path: Path):
         """Run the shell file."""
-        resolved_path = Path(file_name).resolve()
-        file_path = resolved_path.parent
         return subprocess.run(
-            ["sh", str(resolved_path)],
+            ["sh", str(file_path)],
             capture_output=True,
             text=True,
-            cwd=file_path,
+            cwd=file_path.parent,
         )
 
     @staticmethod
@@ -228,7 +248,8 @@ class ShellHandler:
     def run_file(file_name: str, container: DeltaGenerator) -> None:
         """Run the specified file"""
         with container.spinner(f"Running {file_name}"):
-            result = ShellHandler._run(file_name)
+            file_path = Path(file_name)
+            result = ShellHandler._run(file_path)
             print(f"Ran : results - {result}")
             if result.returncode == 0:
                 container.markdown("**✅ Output**")
