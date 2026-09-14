@@ -148,10 +148,9 @@ class PythonHandler:
     @staticmethod
     def _get_python_binary(file_path: Path) -> Path | None:
         """Return the appropriate python binary to run"""
-        python_bin = None  # PythonHandler._get_venv(file_path)
-        if not python_bin:
-            return sys.executable or "python3"
-        return python_bin
+        if python_bin := PythonHandler._get_venv(file_path):
+            return python_bin
+        return sys.executable or "python3"
 
     @staticmethod
     def _run_in_terminal(file_path: Path, env: dict[str, str] | None = None):
