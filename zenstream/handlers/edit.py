@@ -138,7 +138,7 @@ class PythonHandler:
         """Run the Python file capturing output."""
         python_bin = PythonHandler._get_python_binary(file_path)
         return subprocess.run(
-            [python_bin, str(file_path)],
+            [str(python_bin), str(file_path)],
             capture_output=True,
             text=True,
             cwd=file_path.parent,
@@ -157,7 +157,7 @@ class PythonHandler:
         """Run the Python file in a new terminal window."""
         python_bin = PythonHandler._get_python_binary(file_path)
         return PythonHandler._launch_terminal(
-            [python_bin, str(file_path)],
+            [str(python_bin), str(file_path)],
             cwd=file_path.parent,
             env=env,
         )
@@ -211,7 +211,9 @@ class PythonHandler:
                 print(f"Ran : results - {result}")
                 if result.returncode == 0:
                     container.markdown("**✅ Output**")
-                    container.code(result.stdout if result.stdout else "(No output)")
+                    container.code(
+                        result.stdout if result.stdout else f"Error {result.stderr}"
+                    )
                 else:
                     container.subheader("**⚠️ Error**")
                     container.code(
