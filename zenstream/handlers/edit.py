@@ -13,6 +13,60 @@ from styler import Styler
 from utils import get_ext
 
 
+class Terminal:
+    @staticmethod
+    def launch(
+        args: list[str], cwd: Path | str, env: dict[str, str] | None = None
+    ) -> subprocess.Popen:
+        """Launch a command in a new terminal emulator window."""
+        system = platform.system()
+        if system == "Windows":
+            cmd_str = subprocess.list2cmdline(args)
+            return subprocess.Popen(
+                f'start cmd.exe /k "{cmd_str}"',
+                shell=True,
+                cwd=cwd,
+                env=env,
+            )
+        elif system == "Darwin":
+            cmd_str = shlex.join(args)
+            escaped_cmd = cmd_str.replace("\\", "\\\\").replace('"', '\\"')
+            apple_script = f'tell application "Terminal" to do script "{escaped_cmd}"'
+            return subprocess.Popen(["osascript", "-e", apple_script], cwd=cwd, env=env)
+        else:
+            terminals = [
+                "x-terminal-emulator",
+                "konsole",
+                "gnome-terminal",
+                "xfce4-terminal",
+                "kitty",
+                "alacritty",
+                "terminator",
+                "xterm",
+            ]
+            term = next((t for t in terminals if shutil.which(t)), None)
+            if not term:
+                raise RuntimeError("No supported terminal emulator found.")
+
+            shell_bin = shutil.which("bash") or shutil.which("sh") or "sh"
+            pause_cmd = (
+                'read -p "Press Enter to exit..."'
+                if "bash" in shell_bin
+                else 'printf "Press Enter to exit..."; read -r _'
+            )
+            cmd_str = shlex.join(args)
+            inner_cmd = f"{cmd_str}; echo; {pause_cmd}"
+
+            if term == "gnome-terminal":
+                term_cmd = [term, "--", shell_bin, "-c", inner_cmd]
+            elif term == "konsole":
+                term_cmd = [term, "--noclose", "-e", shell_bin, "-c", inner_cmd]
+            else:
+                term_cmd = [term, "-e", shell_bin, "-c", inner_cmd]
+
+            return subprocess.Popen(term_cmd, cwd=cwd, env=env)
+
+
 class PythonHandler:
     @staticmethod
     def _find_env_file(file_path: Path) -> Path | None:
@@ -82,58 +136,6 @@ class PythonHandler:
         return None
 
     @staticmethod
-    def _launch_terminal(
-        args: list[str], cwd: Path | str, env: dict[str, str] | None = None
-    ) -> subprocess.Popen:
-        """Launch a command in a new terminal emulator window."""
-        system = platform.system()
-        if system == "Windows":
-            cmd_str = subprocess.list2cmdline(args)
-            return subprocess.Popen(
-                f'start cmd.exe /k "{cmd_str}"',
-                shell=True,
-                cwd=cwd,
-                env=env,
-            )
-        elif system == "Darwin":
-            cmd_str = shlex.join(args)
-            escaped_cmd = cmd_str.replace("\\", "\\\\").replace('"', '\\"')
-            apple_script = f'tell application "Terminal" to do script "{escaped_cmd}"'
-            return subprocess.Popen(["osascript", "-e", apple_script], cwd=cwd, env=env)
-        else:
-            terminals = [
-                "x-terminal-emulator",
-                "konsole",
-                "gnome-terminal",
-                "xfce4-terminal",
-                "kitty",
-                "alacritty",
-                "terminator",
-                "xterm",
-            ]
-            term = next((t for t in terminals if shutil.which(t)), None)
-            if not term:
-                raise RuntimeError("No supported terminal emulator found.")
-
-            shell_bin = shutil.which("bash") or shutil.which("sh") or "sh"
-            pause_cmd = (
-                'read -p "Press Enter to exit..."'
-                if "bash" in shell_bin
-                else 'printf "Press Enter to exit..."; read -r _'
-            )
-            cmd_str = shlex.join(args)
-            inner_cmd = f"{cmd_str}; echo; {pause_cmd}"
-
-            if term == "gnome-terminal":
-                term_cmd = [term, "--", shell_bin, "-c", inner_cmd]
-            elif term == "konsole":
-                term_cmd = [term, "--noclose", "-e", shell_bin, "-c", inner_cmd]
-            else:
-                term_cmd = [term, "-e", shell_bin, "-c", inner_cmd]
-
-            return subprocess.Popen(term_cmd, cwd=cwd, env=env)
-
-    @staticmethod
     def _run(file_path: Path, env: dict[str, str] | None = None):
         """Run the Python file capturing output."""
         python_bin = PythonHandler._get_python_binary(file_path)
@@ -156,7 +158,7 @@ class PythonHandler:
     def _run_in_terminal(file_path: Path, env: dict[str, str] | None = None):
         """Run the Python file in a new terminal window."""
         python_bin = PythonHandler._get_python_binary(file_path)
-        return PythonHandler._launch_terminal(
+        return Terminal.launch(
             [str(python_bin), str(file_path)],
             cwd=file_path.parent,
             env=env,
@@ -238,26 +240,42 @@ class ShellHandler:
     ):
         """Add action buttons for the given file."""
         with container.form(key=f"shell_form_{file_name}"):
-            submitted = st.form_submit_button(
-                "Run",
-                icon=Action.get_icon(file_name),
-            )
+            col_run, col_term = st.columns([0.5, 0.5])
+            with col_run:
+                submitted = col_run.form_submit_button(
+                    "Run",
+                    icon=Action.get_icon(file_name),
+                )
+            with col_term:
+                new_terminal = st.checkbox("New terminal", value=False)
+
             if submitted:
-                ShellHandler.run_file(file_name, output_box)
+                ShellHandler.run_file(file_name, output_box, new_terminal=new_terminal)
 
     @staticmethod
-    def run_file(file_name: str, container: DeltaGenerator) -> None:
+    def run_file(
+        file_name: str, container: DeltaGenerator, new_terminal: bool = False
+    ) -> None:
         """Run the specified file"""
-        with container.spinner(f"Running {file_name}"):
-            file_path = Path(file_name)
-            result = ShellHandler._run(file_path)
-            print(f"Ran : results - {result}")
-            if result.returncode == 0:
-                container.markdown("**✅ Output**")
-                container.code(result.stdout if result.stdout else "(No output)")
-            else:
-                container.subheader("**⚠️ Error**")
-                container.code(result.stderr if result.stderr else "(No error output)")
+        if new_terminal:
+            try:
+                Terminal.launch(["/bin/bash", file_name], Path(file_name).parent)
+                container.success(f"Launched {file_name} in a new terminal.")
+            except Exception as e:
+                container.error(f"Failed to launch in new terminal: {e}")
+        else:
+            with container.spinner(f"Running {file_name}"):
+                file_path = Path(file_name)
+                result = ShellHandler._run(file_path)
+                print(f"Ran : results - {result}")
+                if result.returncode == 0:
+                    container.markdown("**✅ Output**")
+                    container.code(result.stdout if result.stdout else "(No output)")
+                else:
+                    container.subheader("**⚠️ Error**")
+                    container.code(
+                        result.stderr if result.stderr else "(No error output)"
+                    )
 
 
 class EditFile:
