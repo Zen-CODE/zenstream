@@ -14,6 +14,7 @@ from streamlit.delta_generator import DeltaGenerator
 
 from styler import NUM_COLUMNS, Styler
 from handlers.edit import EditFile
+from handlers.mpd2 import MPD2
 
 
 class ZenStream:
@@ -200,6 +201,7 @@ class ZenStream:
                         f"💧💧💧 Current file: {file_name}", expanded=True
                     ):
                         ZenStream.details(file_name)
+            MPD2.show_actions()
             ZenStream.show_footer()
 
 
