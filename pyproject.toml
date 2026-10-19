@@ -16,7 +16,8 @@ dependencies = [
     "tabula-py",
     "ruff",
     "pre-commit",
-    "watchdog"
+    "watchdog",
+    "python-mpd2"
 ]
 
 [tool.ruff]

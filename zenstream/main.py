@@ -26,7 +26,7 @@ class ZenStream:
             col2.image("images/favicon.png")
 
     @staticmethod
-    def _get_current_folder() -> str:
+    def get_current_folder() -> str:
         """Return the current folder from state, falling back to cwd."""
         folder = State.get("current_folder")
         if not (folder and Path(folder).exists()):
@@ -35,7 +35,7 @@ class ZenStream:
 
     @staticmethod
     def add_path():
-        folder = ZenStream._get_current_folder()
+        folder = ZenStream.get_current_folder()
         parts = folder.split(sep)[1:]
         num_folders = len(parts)
 
@@ -100,7 +100,7 @@ class ZenStream:
 
             return result
 
-        folder = ZenStream._get_current_folder()
+        folder = ZenStream.get_current_folder()
         with st.expander("💧💧 Folder contents", expanded=True):
             cols = st.columns(NUM_COLUMNS)
             file_list = sorted(listdir(folder))
@@ -201,7 +201,7 @@ class ZenStream:
                         f"💧💧💧 Current file: {file_name}", expanded=True
                     ):
                         ZenStream.details(file_name)
-            MPD2.show_actions()
+            MPD2.show_actions(ZenStream.get_current_folder())
             ZenStream.show_footer()
 
 
