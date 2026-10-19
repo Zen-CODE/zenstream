@@ -26,8 +26,6 @@ def get_mdp_client() -> Generator[MPDClient, None, None]:
 class MPD2:
     @staticmethod
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
-        container.info(f"MPD2: Command fired - {command}")
-
         match command:
             case "add" | "replace":
                 # folder = Path(kwargs["folder"])
@@ -110,8 +108,7 @@ class MPD2:
                     Styler.show_dict("Playlist", disp_dict)
 
     @staticmethod
-    def _add_play_button():
-        output_container = st.container()
+    def _add_play_button(output_container: DeltaGenerator):
         cols = st.columns([1] * 7)
 
         Styler.add_button(
@@ -159,8 +156,7 @@ class MPD2:
         )
 
     @staticmethod
-    def _add_other_commands(folder: str):
-        output_container = st.container()
+    def _add_other_commands(output_container: DeltaGenerator, folder: str):
         cols = st.columns([1] * 4)
 
         Styler.add_button(
@@ -192,5 +188,8 @@ class MPD2:
     def show_actions(folder: str):
         with st.expander("🔊 MPD", expanded=True):
             st.subheader("Music Player Daemon 2")
-            MPD2._add_play_button()
-            MPD2._add_other_commands(folder)
+            button_container = st.container()
+            output_container = st.container()
+            with button_container:
+                MPD2._add_play_button(output_container)
+                MPD2._add_other_commands(output_container, folder)
