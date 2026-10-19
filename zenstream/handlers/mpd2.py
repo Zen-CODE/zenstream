@@ -28,16 +28,6 @@ class MPD2:
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         container.info(f"MPD2: Command fired - {command}")
 
-        # client = MPDClient()
-        # client.connect("localhost", 6600)
-        # status = client.status()
-        # # {'volume': '95', 'repeat': '0', 'random': '0', 'single': '0',
-        # # 'consume': '0',
-        # # 'partition': 'default', 'playlist': '103', 'playlistlength': '47',
-        # # 'mixrampdb': '0', 'state': 'stop'}
-        # print(f"Elapsed time: {status.get('elapsed', 0)} seconds")
-        # client.close()
-        # client.disconnect()
         match command:
             case "add" | "replace":
                 # folder = Path(kwargs["folder"])
@@ -58,28 +48,66 @@ class MPD2:
             case "play":
                 with get_mdp_client() as client:
                     client.play(0)
+                with container:
+                    st.info("Play")
+
             case "pause":
                 with get_mdp_client() as client:
                     client.pause(0)
+                with container:
+                    st.info("Pause")
             case "stop":
                 with get_mdp_client() as client:
                     client.stop()
+                with container:
+                    st.info("Stop")
             case "previous":
                 with get_mdp_client() as client:
                     client.previous()
+                with container:
+                    st.info("Previous")
             case "next":
                 with get_mdp_client() as client:
                     client.next()
+                with container:
+                    st.info("Volume up")
+
             case "volup":
                 with get_mdp_client() as client:
                     status = client.status()
                     volume = int(status.get("volume", 0))
                     client.setvol(min(volume + 5, 100))
+                with container:
+                    st.info("Volume up")
+
             case "voldown":
                 with get_mdp_client() as client:
                     status = client.status()
                     volume = int(status.get("volume", 0))
                     client.setvol(max(volume - 5, 0))
+                with container:
+                    st.info("Volume down")
+
+            case "nowplaying":
+                with get_mdp_client() as client:
+                    status = client.status()
+                with container:
+                    data = {
+                        "Volume": status["volume"],
+                        "State": status["state"],
+                        "Elapsed": status.get("elapsed", 0),
+                        "Playlist no.": status.get("playlist", 0),
+                        "Playlist length": status.get("playlistlength", 0),
+                    }
+
+                    Styler.show_dict("Now playing", data)
+
+            case "playlist":
+                with get_mdp_client() as client:
+                    playlist = client.playlist()
+                with container:
+                    disp_dict = {f"Item {k}": item for k, item in enumerate(playlist)}
+                    Styler.show_dict("Playlist", disp_dict)
 
     @staticmethod
     def _add_play_button():
