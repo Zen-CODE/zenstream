@@ -4,6 +4,7 @@ from streamlit.delta_generator import DeltaGenerator
 from mpd import MPDClient
 from contextlib import contextmanager
 from collections.abc import Generator
+import pandas as df
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
@@ -24,6 +25,8 @@ def get_mdp_client() -> Generator[MPDClient, None, None]:
 
 
 class MPD2:
+    _paused = 0
+
     @staticmethod
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         match command:
@@ -51,7 +54,8 @@ class MPD2:
 
             case "pause":
                 with get_mdp_client() as client:
-                    client.pause(0)
+                    MPD2._paused = 1 - MPD2._paused
+                    client.pause(MPD2._paused)
                 with container:
                     st.info("Pause")
             case "stop":
@@ -89,23 +93,56 @@ class MPD2:
             case "nowplaying":
                 with get_mdp_client() as client:
                     status = client.status()
+                    song = client.currentsong()
+
+                # {'file': 'Falling in Reverse/Coming Home/09 - Straight To Hell.mp3',
+                # 'last-modified': '2026-03-14T08:02:16Z',
+                # 'format': '44100:24:2',
+                # 'artist': 'Falling In Reverse',
+                # 'albumartist': 'Falling In Reverse',
+                # 'title': 'Straight To Hell',
+                # 'album': 'Coming Home (Deluxe Edition)',
+                # 'track': '9',
+                # 'date': '2017',
+                # 'genre': 'Post-Hardcore/Alternative Rock',
+                # 'disc': '1',
+                # 'time': '230',
+                # 'duration': '229.616',
+                # 'pos': '8',
+                # 'id': '377'}
+
                 with container:
                     data = {
-                        "Volume": status["volume"],
-                        "State": status["state"],
-                        "Elapsed": status.get("elapsed", 0),
-                        "Playlist no.": status.get("playlist", 0),
-                        "Playlist length": status.get("playlistlength", 0),
+                        "Volume": [status["volume"]],
+                        "State": [status["state"]],
+                        "Elapsed": [status.get("elapsed", 0)],
+                        "Playlist no.": [status.get("playlist", 0)],
+                        "Playlist length": [status.get("playlistlength", 0)],
+                        "File": [song.get("file", "")],
+                        "Artist": [song.get("artist", "")],
+                        "Album": [song.get("album", "")],
+                        "Title": [song.get("title", "")],
+                        "Progress": [
+                            100
+                            * float(status.get("elapsed", 0))
+                            / float(song.get("duration", 1))
+                            if song.get("duration")
+                            else 0
+                        ],
+                        "pos": [song.get("pos", 0)],
+                        "id": [song.get("id", 0)],
                     }
 
-                    Styler.show_dict("Now playing", data)
+                    Styler.show_dataframe("Now playing", df.DataFrame(data).T)
 
             case "playlist":
                 with get_mdp_client() as client:
-                    playlist = client.playlist()
+                    playlist_info = client.playlistinfo()
                 with container:
-                    disp_dict = {f"Item {k}": item for k, item in enumerate(playlist)}
-                    Styler.show_dict("Playlist", disp_dict)
+                    disp_dict = {
+                        f"Item {k}": [item] for k, item in enumerate(playlist_info)
+                    }
+                    Styler.show_dataframe("Playlist", df.DataFrame(disp_dict).T)
 
     @staticmethod
     def _add_play_button(output_container: DeltaGenerator):
@@ -173,7 +210,7 @@ class MPD2:
         )
         Styler.add_button(
             cols[2],
-            "Now PLaying",
+            "Now playing",
             ":material/info:",
             lambda: MPD2._mpd_command("nowplaying", output_container),
         )
@@ -186,8 +223,9 @@ class MPD2:
 
     @staticmethod
     def show_actions(folder: str):
+        display_folder = folder.replace(MUSIC_DIR, "")
         with st.expander("🔊 MPD", expanded=True):
-            st.subheader("Music Player Daemon 2")
+            st.subheader(f"📁 {display_folder}")
             button_container = st.container()
             output_container = st.container()
             with button_container:
