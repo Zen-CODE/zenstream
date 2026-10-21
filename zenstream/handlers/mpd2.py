@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 from styler import Styler
 from streamlit.delta_generator import DeltaGenerator
@@ -89,48 +90,14 @@ class MPD2:
                 with get_mdp_client() as client:
                     status = client.status()
                     song = client.currentsong()
-                    albumart = client.albumart(song.get("file", ""))
-
-                # {'file': 'Falling in Reverse/Coming Home/09 - Straight To Hell.mp3',
-                # 'last-modified': '2026-03-14T08:02:16Z',
-                # 'format': '44100:24:2',
-                # 'artist': 'Falling In Reverse',
-                # 'albumartist': 'Falling In Reverse',
-                # 'title': 'Straight To Hell',
-                # 'album': 'Coming Home (Deluxe Edition)',
-                # 'track': '9',
-                # 'date': '2017',
-                # 'genre': 'Post-Hardcore/Alternative Rock',
-                # 'disc': '1',
-                # 'time': '230',
-                # 'duration': '229.616',
-                # 'pos': '8',
-                # 'id': '377'}
+                    file_ = song.get("file", "")
+                    if file_:
+                        albumart = client.albumart(song.get("file", ""))
+                    else:
+                        albumart = None
 
                 cols = container.columns(2)
                 with cols[0]:
-                    # data = {
-                    #     "Volume": status["volume"],
-                    #     "State": status["state"],
-                    #     "Elapsed": status.get("elapsed", 0),
-                    #     "Playlist no.": status.get("playlist", 0),
-                    #     "Playlist length": status.get("playlistlength", 0),
-                    #     "File": MPD2.convert_path(song.get("file", "")),
-                    #     "Artist": song.get("artist", ""),
-                    #     "Album": song.get("album", ""),
-                    #     "Title": song.get("title", ""),
-                    #     "Progress": str(
-                    #         100
-                    #         * float(status.get("elapsed", 0))
-                    #         / float(song.get("duration", 1))
-                    #         if song.get("duration")
-                    #         else 0
-                    #     ),
-                    #     "pos": song.get("pos", 0),
-                    #     "id": song.get("id", 0),
-                    # }
-
-                    # Styler.show_dict("Now playing", data)
                     product_data = {
                         "🟢": [
                             ":blue[Artist]",
@@ -138,6 +105,8 @@ class MPD2:
                             ":blue[Track]",
                             ":blue[File]",
                             ":blue[Progress]",
+                            ":blue[Position]",
+                            ":blue[ID]",
                         ],
                         "": [
                             song.get("artist"),
@@ -151,6 +120,8 @@ class MPD2:
                                 if song.get("duration")
                                 else 0
                             ),
+                            song.get("pos", 0),
+                            song.get("id", 0),
                         ],
                     }
                     st.table(product_data, border="horizontal")
@@ -164,29 +135,29 @@ class MPD2:
             case "playlist":
                 with get_mdp_client() as client:
                     playlist_info = client.playlistinfo()
-                    # Each item in thej list:
-                    # {
-                    # "file": "Falling in Reverse/Coming Home/01 - Coming Home.mp3",
-                    # "last-modified": "2026-03-14T08:02:16Z",
-                    # "format": "44100:24:2",
-                    # "artist": "Falling In Reverse",
-                    # "albumartist": "Falling In Reverse",
-                    # "title": "Coming Home",
-                    # "album": "Coming Home (Deluxe Edition)",
-                    # "track": "1",
-                    # "date": "2017",
-                    # "genre": "Post-Hardcore/Alternative Rock",
-                    # "disc": "1",
-                    # "time": "294",
-                    # "duration": "294.086",
-                    # "pos": "0",
-                    # "id": "369"
-                    # }
+                    current_id = client.currentsong().get("id")
+
+                ids = [item.get("id") for item in playlist_info]
+                playlist_data = {
+                    "🟢": ["▶" if item_id == current_id else "" for item_id in ids],
+                    "Pos": [item.get("pos", "") for item in playlist_info],
+                    "Artist": [item.get("artist", "") for item in playlist_info],
+                    "Album": [item.get("album", "") for item in playlist_info],
+                    "Title": [item.get("title", "") for item in playlist_info],
+                    "ID": ids,
+                }
+
+                def _highlight_current(row):
+                    style = (
+                        "background-color: rgba(0, 160, 80, 0.25)"
+                        if row["ID"] == current_id
+                        else ""
+                    )
+                    return [style] * len(row)
+
                 with container:
-                    disp_dict = {
-                        f"Item {k}": [item] for k, item in enumerate(playlist_info)
-                    }
-                    Styler.show_dict("Playlist", disp_dict)
+                    df = pd.DataFrame(playlist_data)
+                    st.table(df.style.apply(_highlight_current, axis=1))
 
     @staticmethod
     def _add_play_button(output_container: DeltaGenerator):
