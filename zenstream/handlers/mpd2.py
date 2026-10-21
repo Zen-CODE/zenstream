@@ -27,23 +27,19 @@ class MPD2:
     _paused = 0
 
     @staticmethod
+    def convert_path(path: str) -> str:
+        """Convert the MPD file path to the local music directory path."""
+        return MUSIC_DIR + path
+
+    @staticmethod
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         match command:
             case "add" | "replace":
-                # folder = Path(kwargs["folder"])
-                # files = [file_path.name for file_path in folder.iterdir()
-                #          if file_path.name.endswith(
-                #              (".mp3", ".flac", ".wav", ".ogg", ".wma"))]
-                # file_names = sorted([file_path.replace(MUSIC_DIR, "")
-                #                      for file_path in files])
-
                 with get_mdp_client() as client:
                     if command == "replace":
                         client.clear()
                     rel_folder = kwargs["folder"].replace(MUSIC_DIR, "")
                     client.add(rel_folder)
-                    # for file_name in file_names:
-                    #     client.add(file_name)
 
             case "play":
                 with get_mdp_client() as client:
@@ -93,6 +89,7 @@ class MPD2:
                 with get_mdp_client() as client:
                     status = client.status()
                     song = client.currentsong()
+                    albumart = client.albumart(song.get("file", ""))
 
                 # {'file': 'Falling in Reverse/Coming Home/09 - Straight To Hell.mp3',
                 # 'last-modified': '2026-03-14T08:02:16Z',
@@ -110,29 +107,59 @@ class MPD2:
                 # 'pos': '8',
                 # 'id': '377'}
 
-                with container:
-                    data = {
-                        "Volume": status["volume"],
-                        "State": status["state"],
-                        "Elapsed": status.get("elapsed", 0),
-                        "Playlist no.": status.get("playlist", 0),
-                        "Playlist length": status.get("playlistlength", 0),
-                        "File": song.get("file", ""),
-                        "Artist": song.get("artist", ""),
-                        "Album": song.get("album", ""),
-                        "Title": song.get("title", ""),
-                        "Progress": str(
-                            100
-                            * float(status.get("elapsed", 0))
-                            / float(song.get("duration", 1))
-                            if song.get("duration")
-                            else 0
-                        ),
-                        "pos": song.get("pos", 0),
-                        "id": song.get("id", 0),
-                    }
+                cols = container.columns(2)
+                with cols[0]:
+                    # data = {
+                    #     "Volume": status["volume"],
+                    #     "State": status["state"],
+                    #     "Elapsed": status.get("elapsed", 0),
+                    #     "Playlist no.": status.get("playlist", 0),
+                    #     "Playlist length": status.get("playlistlength", 0),
+                    #     "File": MPD2.convert_path(song.get("file", "")),
+                    #     "Artist": song.get("artist", ""),
+                    #     "Album": song.get("album", ""),
+                    #     "Title": song.get("title", ""),
+                    #     "Progress": str(
+                    #         100
+                    #         * float(status.get("elapsed", 0))
+                    #         / float(song.get("duration", 1))
+                    #         if song.get("duration")
+                    #         else 0
+                    #     ),
+                    #     "pos": song.get("pos", 0),
+                    #     "id": song.get("id", 0),
+                    # }
 
-                    Styler.show_dict("Now playing", data)
+                    # Styler.show_dict("Now playing", data)
+                    product_data = {
+                        "🟢": [
+                            ":blue[Artist]",
+                            ":blue[Album]",
+                            ":blue[Track]",
+                            ":blue[File]",
+                            ":blue[Progress]",
+                        ],
+                        "": [
+                            song.get("artist"),
+                            song.get("album"),
+                            song.get("title"),
+                            song.get("file", ""),
+                            str(
+                                100
+                                * float(status.get("elapsed", 0))
+                                / float(song.get("duration", 1))
+                                if song.get("duration")
+                                else 0
+                            ),
+                        ],
+                    }
+                    st.table(product_data, border="horizontal")
+                with cols[1]:
+                    if albumart and "binary" in albumart:
+                        image_bytes = albumart["binary"]
+                        st.image(image_bytes, "Album Art")
+                    else:
+                        st.image(MUSIC_DIR + "default.png", "Album Art")
 
             case "playlist":
                 with get_mdp_client() as client:
