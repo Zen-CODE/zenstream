@@ -4,7 +4,6 @@ from streamlit.delta_generator import DeltaGenerator
 from mpd import MPDClient
 from contextlib import contextmanager
 from collections.abc import Generator
-import pandas as df
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
@@ -113,36 +112,54 @@ class MPD2:
 
                 with container:
                     data = {
-                        "Volume": [status["volume"]],
-                        "State": [status["state"]],
-                        "Elapsed": [status.get("elapsed", 0)],
-                        "Playlist no.": [status.get("playlist", 0)],
-                        "Playlist length": [status.get("playlistlength", 0)],
-                        "File": [song.get("file", "")],
-                        "Artist": [song.get("artist", "")],
-                        "Album": [song.get("album", "")],
-                        "Title": [song.get("title", "")],
-                        "Progress": [
+                        "Volume": status["volume"],
+                        "State": status["state"],
+                        "Elapsed": status.get("elapsed", 0),
+                        "Playlist no.": status.get("playlist", 0),
+                        "Playlist length": status.get("playlistlength", 0),
+                        "File": song.get("file", ""),
+                        "Artist": song.get("artist", ""),
+                        "Album": song.get("album", ""),
+                        "Title": song.get("title", ""),
+                        "Progress": str(
                             100
                             * float(status.get("elapsed", 0))
                             / float(song.get("duration", 1))
                             if song.get("duration")
                             else 0
-                        ],
-                        "pos": [song.get("pos", 0)],
-                        "id": [song.get("id", 0)],
+                        ),
+                        "pos": song.get("pos", 0),
+                        "id": song.get("id", 0),
                     }
 
-                    Styler.show_dataframe("Now playing", df.DataFrame(data).T)
+                    Styler.show_dict("Now playing", data)
 
             case "playlist":
                 with get_mdp_client() as client:
                     playlist_info = client.playlistinfo()
+                    # Each item in thej list:
+                    # {
+                    # "file": "Falling in Reverse/Coming Home/01 - Coming Home.mp3",
+                    # "last-modified": "2026-03-14T08:02:16Z",
+                    # "format": "44100:24:2",
+                    # "artist": "Falling In Reverse",
+                    # "albumartist": "Falling In Reverse",
+                    # "title": "Coming Home",
+                    # "album": "Coming Home (Deluxe Edition)",
+                    # "track": "1",
+                    # "date": "2017",
+                    # "genre": "Post-Hardcore/Alternative Rock",
+                    # "disc": "1",
+                    # "time": "294",
+                    # "duration": "294.086",
+                    # "pos": "0",
+                    # "id": "369"
+                    # }
                 with container:
                     disp_dict = {
                         f"Item {k}": [item] for k, item in enumerate(playlist_info)
                     }
-                    Styler.show_dataframe("Playlist", df.DataFrame(disp_dict).T)
+                    Styler.show_dict("Playlist", disp_dict)
 
     @staticmethod
     def _add_play_button(output_container: DeltaGenerator):
