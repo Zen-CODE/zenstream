@@ -44,7 +44,12 @@ class MPD2:
 
             case "play":
                 with get_mdp_client() as client:
-                    client.play(0)
+                    status = client.status()
+                    if status.get("state") == "pause":
+                        client.pause(0)
+                    elif status.get("state") != "play":
+                        client.play(int(status.get("song", 0)))
+                MPD2._paused = 0
                 with container:
                     st.info("Play")
 
@@ -61,14 +66,20 @@ class MPD2:
                     st.info("Stop")
             case "previous":
                 with get_mdp_client() as client:
-                    client.previous()
+                    pos = int(client.status().get("song", 0))
+                    client.play(max(pos - 1, 0))
+                MPD2._paused = 0
                 with container:
                     st.info("Previous")
             case "next":
                 with get_mdp_client() as client:
-                    client.next()
+                    status = client.status()
+                    pos = int(status.get("song", -1))
+                    if pos + 1 < int(status.get("playlistlength", 0)):
+                        client.play(pos + 1)
+                MPD2._paused = 0
                 with container:
-                    st.info("Volume up")
+                    st.info("Next")
 
             case "volup":
                 with get_mdp_client() as client:
@@ -223,18 +234,6 @@ class MPD2:
             ":material/replace_audio:",
             lambda: MPD2._mpd_command("replace", output_container, folder=folder),
         )
-        Styler.add_button(
-            cols[2],
-            "Now playing",
-            ":material/info:",
-            lambda: MPD2._mpd_command("nowplaying", output_container),
-        )
-        Styler.add_button(
-            cols[3],
-            "Show playlist",
-            ":material/playlist_play:",
-            lambda: MPD2._mpd_command("playlist", output_container),
-        )
 
     @staticmethod
     def show_actions(folder: str):
@@ -245,4 +244,10 @@ class MPD2:
             output_container = st.container()
             with button_container:
                 MPD2._add_play_button(output_container)
-                MPD2._add_other_commands(output_container, folder)
+                tabs = st.tabs(["Now Playing", "Playlist", "Actions"])
+                with tabs[0]:
+                    MPD2._mpd_command("nowplaying", st.container())
+                with tabs[1]:
+                    MPD2._mpd_command("playlist", st.container())
+                with tabs[2]:
+                    MPD2._add_other_commands(output_container, folder)
