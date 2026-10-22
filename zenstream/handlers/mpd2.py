@@ -171,8 +171,8 @@ class MPD2:
                     st.table(df.style.apply(_highlight_current, axis=1))
 
     @staticmethod
-    def _add_play_button(output_container: DeltaGenerator):
-        cols = st.columns([1] * 7)
+    def _add_play_button(output_container: DeltaGenerator, folder: str):
+        cols = st.columns([1] * 9)
 
         Styler.add_button(
             cols[0],
@@ -207,30 +207,27 @@ class MPD2:
 
         Styler.add_button(
             cols[5],
-            "Vol up",
-            ":material/volume_up:",
-            lambda: MPD2._mpd_command("volup", output_container),
-        )
-        Styler.add_button(
-            cols[6],
-            "Vol down",
+            "🔉",
             ":material/volume_down:",
             lambda: MPD2._mpd_command("voldown", output_container),
         )
 
-    @staticmethod
-    def _add_other_commands(output_container: DeltaGenerator, folder: str):
-        cols = st.columns([1] * 4)
+        Styler.add_button(
+            cols[6],
+            "🔊",
+            ":material/volume_up:",
+            lambda: MPD2._mpd_command("volup", output_container),
+        )
 
         Styler.add_button(
-            cols[0],
-            "Add folder",
+            cols[7],
+            "Add ➕",
             ":material/add_to_queue:",
             lambda: MPD2._mpd_command("add", output_container, folder=folder),
         )
         Styler.add_button(
-            cols[1],
-            "Replace",
+            cols[8],
+            "Replace ❇️",
             ":material/replace_audio:",
             lambda: MPD2._mpd_command("replace", output_container, folder=folder),
         )
@@ -243,11 +240,9 @@ class MPD2:
             button_container = st.container()
             output_container = st.container()
             with button_container:
-                MPD2._add_play_button(output_container)
-                tabs = st.tabs(["Now Playing", "Playlist", "Actions"])
+                MPD2._add_play_button(output_container, folder)
+                tabs = st.tabs(["Now Playing", "Playlist"])
                 with tabs[0]:
                     MPD2._mpd_command("nowplaying", st.container())
                 with tabs[1]:
                     MPD2._mpd_command("playlist", st.container())
-                with tabs[2]:
-                    MPD2._add_other_commands(output_container, folder)
