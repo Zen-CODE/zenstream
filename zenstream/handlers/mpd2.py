@@ -117,6 +117,7 @@ class MPD2:
                             ":blue[File]",
                             ":blue[Progress]",
                             ":blue[Position]",
+                            ":blue[Volume]",
                             ":blue[ID]",
                         ],
                         "": [
@@ -132,6 +133,7 @@ class MPD2:
                                 else 0
                             ),
                             song.get("pos", 0),
+                            status.get("volume", 0),
                             song.get("id", 0),
                         ],
                     }
