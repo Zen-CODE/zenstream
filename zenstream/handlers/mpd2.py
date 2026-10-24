@@ -8,6 +8,7 @@ from mpd import MPDClient
 from contextlib import contextmanager
 from collections.abc import Generator
 from random import choice
+from os import listdir, path
 
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
@@ -30,18 +31,28 @@ def get_mdp_client() -> Generator[MPDClient, None, None]:
 
 class ZenMPD:
     @staticmethod
+    def _get_library_files(folder: str) -> list[str] | None:
+        files = []
+        lib_folder = folder.replace(MUSIC_DIR, "")
+        for f in sorted(listdir(folder), reverse=False):
+            ext = f.split(".")[-1].lower()
+            if ext in ["mp3", "flac", "wav", "m4a"]:
+                files.append(path.join(lib_folder, f))
+        return files if files else None
+
+    @staticmethod
     def add(folder: str):
         with get_mdp_client() as client:
-            client.clear()
-            rel_folder = folder.replace(MUSIC_DIR, "")
-            client.add(rel_folder)
+            for lib_file in ZenMPD._get_library_files(folder):
+                client.add(lib_file)
 
     @staticmethod
     def replace(folder: str):
         with get_mdp_client() as client:
             client.clear()
-            rel_folder = folder.replace(MUSIC_DIR, "")
-            client.add(rel_folder)
+            for lib_file in ZenMPD._get_library_files(folder):
+                client.add(lib_file)
+            client.play(0)
 
     @staticmethod
     def play():
@@ -153,11 +164,9 @@ class MPD2:
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         match command:
             case "add":
-                rel_folder = kwargs["folder"].replace(MUSIC_DIR, "")
-                ZenMPD.add(rel_folder)
+                ZenMPD.add(kwargs["folder"])
             case "replace":
-                rel_folder = kwargs["folder"].replace(MUSIC_DIR, "")
-                ZenMPD.replace(rel_folder)
+                ZenMPD.replace(kwargs["folder"])
             case "play":
                 ZenMPD.play()
                 container.info("Play")
