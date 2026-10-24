@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 from styler import Styler
@@ -26,6 +28,60 @@ def get_mdp_client() -> Generator[MPDClient, None, None]:
             st.error("Error unloading MDPClient: {e}")
 
 
+class ZenMPD:
+    @staticmethod
+    def add(folder: str):
+        with get_mdp_client() as client:
+            client.clear()
+            rel_folder = folder.replace(MUSIC_DIR, "")
+            client.add(rel_folder)
+
+    @staticmethod
+    def replace(folder: str):
+        with get_mdp_client() as client:
+            client.clear()
+            rel_folder = folder.replace(MUSIC_DIR, "")
+            client.add(rel_folder)
+
+    @staticmethod
+    def play():
+        with get_mdp_client() as client:
+            status = client.status()
+            if status.get("state") == "pause":
+                client.pause(0)
+            elif status.get("state") != "play":
+                client.play(int(status.get("song", 0)))
+        MPD2._paused = 0
+
+    @staticmethod
+    def pause():
+        with get_mdp_client() as client:
+            MPD2._paused = 1 - MPD2._paused
+            client.pause(MPD2._paused)
+
+    @staticmethod
+    def stop():
+        with get_mdp_client() as client:
+            client.stop()
+        MPD2._paused = 0
+
+    @staticmethod
+    def previous():
+        with get_mdp_client() as client:
+            pos = int(client.status().get("song", 0))
+            client.play(max(pos - 1, 0))
+        MPD2._paused = 0
+
+    @staticmethod
+    def next():
+        with get_mdp_client() as client:
+            status = client.status()
+            pos = int(status.get("song", -1))
+            if pos + 1 < int(status.get("playlistlength", 0)):
+                client.play(pos + 1)
+        MPD2._paused = 0
+
+
 class MPD2:
     _paused = 0
 
@@ -37,49 +93,28 @@ class MPD2:
     @staticmethod
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         match command:
-            case "add" | "replace":
-                with get_mdp_client() as client:
-                    if command == "replace":
-                        client.clear()
-                    rel_folder = kwargs["folder"].replace(MUSIC_DIR, "")
-                    client.add(rel_folder)
-
+            case "add":
+                rel_folder = kwargs["folder"].replace(MUSIC_DIR, "")
+                ZenMPD.add(rel_folder)
+            case "replace":
+                rel_folder = kwargs["folder"].replace(MUSIC_DIR, "")
+                ZenMPD.replace(rel_folder)
             case "play":
-                with get_mdp_client() as client:
-                    status = client.status()
-                    if status.get("state") == "pause":
-                        client.pause(0)
-                    elif status.get("state") != "play":
-                        client.play(int(status.get("song", 0)))
-                MPD2._paused = 0
-                with container:
-                    st.info("Play")
-
+                ZenMPD.play()
+                container.info("Play")
             case "pause":
-                with get_mdp_client() as client:
-                    MPD2._paused = 1 - MPD2._paused
-                    client.pause(MPD2._paused)
-                with container:
-                    st.info("Pause")
+                ZenMPD.pause()
+                container.info("Pause")
             case "stop":
-                with get_mdp_client() as client:
-                    client.stop()
+                ZenMPD.stop()
                 with container:
                     st.info("Stop")
             case "previous":
-                with get_mdp_client() as client:
-                    pos = int(client.status().get("song", 0))
-                    client.play(max(pos - 1, 0))
-                MPD2._paused = 0
+                ZenMPD.previous()
                 with container:
                     st.info("Previous")
             case "next":
-                with get_mdp_client() as client:
-                    status = client.status()
-                    pos = int(status.get("song", -1))
-                    if pos + 1 < int(status.get("playlistlength", 0)):
-                        client.play(pos + 1)
-                MPD2._paused = 0
+                ZenMPD.next()
                 with container:
                     st.info("Next")
 
@@ -121,8 +156,8 @@ class MPD2:
                     status = client.status()
                     song = client.currentsong()
                     file_ = song.get("file", "")
-                    if file_:
-                        albumart = client.albumart(song.get("file", ""))
+                    if file_ and Path(file_).exists():
+                        albumart = client.albumart(file_)
                     else:
                         albumart = None
 
