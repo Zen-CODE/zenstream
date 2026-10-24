@@ -133,6 +133,16 @@ class ZenMPD:
                 client.add(chosen)
 
     @staticmethod
+    def _get_folder_art(file_path: str) -> str | None:
+        folder_path = Path(MUSIC_DIR + file_path).parent
+        for file_name in folder_path.iterdir():
+            if file_name.is_file() and file_name.name.lower().endswith(
+                (".jpg", ".jpeg", ".png")
+            ):
+                return str(file_name)
+        return None
+
+    @staticmethod
     def nowplaying() -> dict | str | None:
         with get_mdp_client() as client:
             status = client.status()
@@ -141,7 +151,7 @@ class ZenMPD:
             if file_ and Path(file_).exists():
                 albumart = client.albumart(file_)
             else:
-                albumart = None
+                albumart = ZenMPD._get_folder_art(file_)
         return status, song, albumart
 
     @staticmethod
@@ -233,7 +243,9 @@ class MPD2:
                     }
                     st.table(product_data, border="horizontal")
                 with cols[1]:
-                    if albumart and "binary" in albumart:
+                    if isinstance(albumart, str):
+                        st.image(albumart, "Album Art")
+                    elif "binary" in albumart:
                         image_bytes = albumart["binary"]
                         st.image(image_bytes, "Album Art")
                     else:
