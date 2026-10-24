@@ -137,6 +137,7 @@ class MPD2:
                             ":blue[Progress]",
                             ":blue[Position]",
                             ":blue[Volume]",
+                            ":blue[State]",
                             ":blue[ID]",
                         ],
                         "": [
@@ -153,6 +154,7 @@ class MPD2:
                             ),
                             song.get("pos", 0),
                             status.get("volume", 0),
+                            status.get("state", "-"),
                             song.get("id", 0),
                         ],
                     }
@@ -271,9 +273,9 @@ class MPD2:
 
     @staticmethod
     def show_actions(folder: str):
-        display_folder = folder.replace(MUSIC_DIR, "")
+        # display_folder = folder.replace(MUSIC_DIR, "")
         with st.expander("🔊 MPD", expanded=True):
-            st.subheader(f"📁 {display_folder}")
+            # st.subheader(f"📁 {display_folder}")
             button_container = st.container()
             output_container = st.container()
             with button_container:

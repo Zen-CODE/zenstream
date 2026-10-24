@@ -193,6 +193,7 @@ class ZenStream:
         if file_name := st.query_params.get("file_name"):
             EditFile.edit_file(file_name)
         else:
+            MPD2.show_actions(ZenStream.get_current_folder())
             ZenStream.add_path()
             with st.spinner("Loading folder..."):
                 ZenStream.listing()
@@ -201,7 +202,6 @@ class ZenStream:
                         f"💧💧💧 Current file: {file_name}", expanded=True
                     ):
                         ZenStream.details(file_name)
-            MPD2.show_actions(ZenStream.get_current_folder())
             ZenStream.show_footer()
 
 
