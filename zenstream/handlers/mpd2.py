@@ -81,6 +81,65 @@ class ZenMPD:
                 client.play(pos + 1)
         MPD2._paused = 0
 
+    @staticmethod
+    def volup():
+        with get_mdp_client() as client:
+            status = client.status()
+            volume = int(status.get("volume", 0))
+            client.setvol(min(volume + 5, 100))
+
+    @staticmethod
+    def voldown():
+        with get_mdp_client() as client:
+            status = client.status()
+            volume = int(status.get("volume", 0))
+            client.setvol(max(volume - 5, 0))
+
+    @staticmethod
+    def _choose_random_album(client: MPDClient) -> str | None:
+        all_files = client.listall("/")
+        chosen, count = None, 0
+        while count < 100 and not chosen:
+            candidate = choice(all_files)
+            if file_name := candidate.get("file"):
+                chosen = file_name.split("/", maxsplit=2)
+                chosen = "/".join(chosen)
+            count += 1
+        return chosen
+
+    @staticmethod
+    def playrandomalbum():
+        with get_mdp_client() as client:
+            if chosen := ZenMPD._choose_random_album(client):
+                client.clear()
+                client.add(chosen)
+                client.play(0)
+
+    @staticmethod
+    def addrandomalbum():
+        with get_mdp_client() as client:
+            if chosen := ZenMPD._choose_random_album(client):
+                client.add(chosen)
+
+    @staticmethod
+    def nowplaying() -> dict | str | None:
+        with get_mdp_client() as client:
+            status = client.status()
+            song = client.currentsong()
+            file_ = song.get("file", "")
+            if file_ and Path(file_).exists():
+                albumart = client.albumart(file_)
+            else:
+                albumart = None
+        return status, song, albumart
+
+    @staticmethod
+    def playlist() -> tuple[list[dict], str | None]:
+        with get_mdp_client() as client:
+            playlist_info = client.playlistinfo()
+            current_id = client.currentsong().get("id")
+        return playlist_info, current_id
+
 
 class MPD2:
     _paused = 0
@@ -117,50 +176,20 @@ class MPD2:
                 ZenMPD.next()
                 with container:
                     st.info("Next")
-
             case "volup":
-                with get_mdp_client() as client:
-                    status = client.status()
-                    volume = int(status.get("volume", 0))
-                    client.setvol(min(volume + 5, 100))
+                ZenMPD.volup()
                 with container:
                     st.info("Volume up")
-            case "playrandomalbum" | "addrandomalbum":
-                with get_mdp_client() as client:
-                    all_files = client.listall("/")
-                    chosen, count = None, 0
-                    while count < 100 and not chosen:
-                        candidate = choice(all_files)
-                        if file_name := candidate.get("file"):
-                            chosen = file_name.split("/", maxsplit=2)
-                            chosen = "/".join(chosen)
-                        count += 1
-                    if chosen:
-                        if command == "playrandomalbum":
-                            client.clear()
-                            client.add(chosen)
-                            client.play(0)
-                        elif command == "addrandomalbum":
-                            client.add(chosen)
-
             case "voldown":
-                with get_mdp_client() as client:
-                    status = client.status()
-                    volume = int(status.get("volume", 0))
-                    client.setvol(max(volume - 5, 0))
+                ZenMPD.voldown()
                 with container:
                     st.info("Volume down")
-
+            case "playrandomalbum":
+                ZenMPD.playrandomalbum()
+            case "addrandomalbum":
+                ZenMPD.addrandomalbum()
             case "nowplaying":
-                with get_mdp_client() as client:
-                    status = client.status()
-                    song = client.currentsong()
-                    file_ = song.get("file", "")
-                    if file_ and Path(file_).exists():
-                        albumart = client.albumart(file_)
-                    else:
-                        albumart = None
-
+                status, song, albumart = ZenMPD.nowplaying()
                 cols = container.columns(2)
                 with cols[0]:
                     product_data = {
@@ -200,12 +229,8 @@ class MPD2:
                         st.image(image_bytes, "Album Art")
                     else:
                         st.image(MUSIC_DIR + "default.png", "Album Art")
-
             case "playlist":
-                with get_mdp_client() as client:
-                    playlist_info = client.playlistinfo()
-                    current_id = client.currentsong().get("id")
-
+                playlist_info, current_id = ZenMPD.playlist()
                 ids = [item.get("id") for item in playlist_info]
                 playlist_data = {
                     "🟢": ["▶" if item_id == current_id else "" for item_id in ids],
