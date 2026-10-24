@@ -5,6 +5,8 @@ from streamlit.delta_generator import DeltaGenerator
 from mpd import MPDClient
 from contextlib import contextmanager
 from collections.abc import Generator
+from random import choice
+
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
@@ -88,6 +90,23 @@ class MPD2:
                     client.setvol(min(volume + 5, 100))
                 with container:
                     st.info("Volume up")
+            case "playrandomalbum" | "addrandomalbum":
+                with get_mdp_client() as client:
+                    all_files = client.listall("/")
+                    chosen, count = None, 0
+                    while count < 100 and not chosen:
+                        candidate = choice(all_files)
+                        if file_name := candidate.get("file"):
+                            chosen = file_name.split("/", maxsplit=2)
+                            chosen = "/".join(chosen)
+                        count += 1
+                    if chosen:
+                        if command == "playrandomalbum":
+                            client.clear()
+                            client.add(chosen)
+                            client.play(0)
+                        elif command == "addrandomalbum":
+                            client.add(chosen)
 
             case "voldown":
                 with get_mdp_client() as client:
@@ -174,7 +193,7 @@ class MPD2:
 
     @staticmethod
     def _add_play_button(output_container: DeltaGenerator, folder: str):
-        cols = st.columns([1] * 9)
+        cols = st.columns([1] * 11)
 
         Styler.add_button(
             cols[0],
@@ -232,6 +251,22 @@ class MPD2:
             "Replace ❇️",
             ":material/replace_audio:",
             lambda: MPD2._mpd_command("replace", output_container, folder=folder),
+        )
+        Styler.add_button(
+            cols[9],
+            "Play Random 🎲",
+            ":material/album:",
+            lambda: MPD2._mpd_command(
+                "playrandomalbum", output_container, folder=folder
+            ),
+        )
+        Styler.add_button(
+            cols[10],
+            "Add Random 🎲",
+            ":material/album:",
+            lambda: MPD2._mpd_command(
+                "addrandomalbum", output_container, folder=folder
+            ),
         )
 
     @staticmethod
