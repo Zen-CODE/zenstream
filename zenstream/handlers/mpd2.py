@@ -175,8 +175,10 @@ class MPD2:
         match command:
             case "add":
                 ZenMPD.add(kwargs["folder"])
+                container.info(f"Added {kwargs['folder']}")
             case "replace":
                 ZenMPD.replace(kwargs["folder"])
+                container.info(f"Replacing with {kwargs['folder']}")
             case "play":
                 ZenMPD.play()
                 container.info("Play")
@@ -185,28 +187,25 @@ class MPD2:
                 container.info("Pause")
             case "stop":
                 ZenMPD.stop()
-                with container:
-                    st.info("Stop")
+                container.info("Stop")
             case "previous":
                 ZenMPD.previous()
-                with container:
-                    st.info("Previous")
+                container.info("Previous")
             case "next":
                 ZenMPD.next()
-                with container:
-                    st.info("Next")
+                container.info("Next")
             case "volup":
                 ZenMPD.volup()
-                with container:
-                    st.info("Volume up")
+                container.info("Volume up")
             case "voldown":
                 ZenMPD.voldown()
-                with container:
-                    st.info("Volume down")
+                container.info("Volume down")
             case "playrandomalbum":
                 ZenMPD.playrandomalbum()
+                container.info("Playing random album")
             case "addrandomalbum":
                 ZenMPD.addrandomalbum()
+                container.info("Adding random album")
             case "nowplaying":
                 status, song, albumart = ZenMPD.nowplaying()
                 cols = container.columns(2)
