@@ -8,7 +8,7 @@ from mpd import MPDClient
 from contextlib import contextmanager
 from collections.abc import Generator
 from random import choice
-from os import listdir, path
+from os import listdir
 
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
@@ -31,14 +31,18 @@ def get_mdp_client() -> Generator[MPDClient, None, None]:
 
 class ZenMPD:
     @staticmethod
-    def _get_library_files(folder: str) -> list[str] | None:
-        files = []
-        lib_folder = folder.replace(MUSIC_DIR, "")
+    def _get_library_files(folder: str, existing: list | None = None) -> list[str]:
+        top_level = bool(existing is None)
+        files = [] if top_level else existing
         for f in sorted(listdir(folder), reverse=False):
-            ext = f.split(".")[-1].lower()
-            if ext in ["mp3", "flac", "wav", "m4a"]:
-                files.append(path.join(lib_folder, f))
-        return files if files else None
+            file_path = Path("/".join([folder, f]))
+            if file_path.is_dir():
+                ZenMPD._get_library_files(str(file_path), existing=files)
+            else:
+                ext = f.split(".")[-1].lower()
+                if ext in ["mp3", "flac", "wav", "m4a"]:
+                    files.append(str(file_path))
+        return [fname.replace(MUSIC_DIR, "") for fname in files]
 
     @staticmethod
     def add(folder: str):
@@ -227,13 +231,7 @@ class MPD2:
                             song.get("album"),
                             song.get("title"),
                             song.get("file", ""),
-                            str(
-                                100
-                                * float(status.get("elapsed", 0))
-                                / float(song.get("duration", 1))
-                                if song.get("duration")
-                                else 0
-                            ),
+                            f"{status.get('elapsed')} / {song.get('duration')}",
                             song.get("pos", 0),
                             status.get("volume", 0),
                             status.get("state", "-"),
@@ -324,22 +322,25 @@ class MPD2:
 
     @staticmethod
     def add_playlist_buttons(output_container: DeltaGenerator, folder: str):
-        cols = st.columns([1] * 5)
+        cols = st.columns([1] * 6)
+        short_folder = folder.replace(MUSIC_DIR, "")
+        with cols[0]:
+            st.markdown(f"📁 {short_folder}")
 
         Styler.add_button(
-            cols[0],
+            cols[1],
             "Add ➕",
             ":material/add_to_queue:",
             lambda: MPD2._mpd_command("add", output_container, folder=folder),
         )
         Styler.add_button(
-            cols[1],
+            cols[2],
             "Replace ❇️",
             ":material/replace_audio:",
             lambda: MPD2._mpd_command("replace", output_container, folder=folder),
         )
         Styler.add_button(
-            cols[2],
+            cols[3],
             "Play Random 🎲",
             ":material/album:",
             lambda: MPD2._mpd_command(
@@ -347,14 +348,14 @@ class MPD2:
             ),
         )
         Styler.add_button(
-            cols[3],
+            cols[4],
             "Add Random 🎲",
             ":material/album:",
             lambda: MPD2._mpd_command(
                 "addrandomalbum", output_container, folder=folder
             ),
         )
-        Styler.add_button(cols[4], "♻️", ":material/recycling:", lambda: None)
+        Styler.add_button(cols[5], "♻️", ":material/recycling:", lambda: None)
 
     @staticmethod
     def show_actions(folder: str):
