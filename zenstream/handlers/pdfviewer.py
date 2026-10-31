@@ -3,7 +3,6 @@ from os.path import sep
 import pandas as pd
 import streamlit as st
 import tabula
-
 from styler import Styler
 
 

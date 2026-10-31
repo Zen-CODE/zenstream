@@ -8,13 +8,12 @@ from uuid import uuid4
 import pyperclip
 import streamlit as st
 from actions import Action
+from handlers.edit import EditFile
 from handlers.filedetails import FileDetails
+from handlers.mpd2 import MPD2
 from state import State
 from streamlit.delta_generator import DeltaGenerator
-
 from styler import NUM_COLUMNS, Styler
-from handlers.edit import EditFile
-from handlers.mpd2 import MPD2
 
 
 class ZenStream:

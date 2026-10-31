@@ -1,7 +1,6 @@
 import streamlit as st
 from PIL import Image, ImageFile
 from PIL.ExifTags import TAGS
-
 from styler import Styler
 
 

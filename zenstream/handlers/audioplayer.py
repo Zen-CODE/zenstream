@@ -3,23 +3,13 @@ from os import sep
 
 import streamlit as st
 from mutagen import File
-from mutagen.easyid3 import EasyID3
 
 from styler import Styler
 from utils import get_ext
+from zenstream.handlers.audiofile import AudioFile
 
 
 class AudioPlayer:
-    @staticmethod
-    def get_id3_dict(file_name: str) -> dict:
-        """Return a dictionary on values from the ID3 tag or an empty dict."""
-        try:
-            audio = EasyID3(file_name)
-            return {key.title(): value[0] for key, value in audio.items()}
-
-        except Exception:
-            return {}
-
     @staticmethod
     def _show_meta(file_name: str):
         info: File = File(file_name).info
@@ -37,7 +27,7 @@ class AudioPlayer:
         Styler.show_dict("Track Metadata", data)
 
         if get_ext(file_name) == "mp3":
-            data = AudioPlayer.get_id3_dict(file_name)
+            data = AudioFile.get_id3_tag(file_name)
             if data:
                 Styler.show_dict("ID3 Tag", data)
             else:

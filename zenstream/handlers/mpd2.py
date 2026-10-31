@@ -1,15 +1,14 @@
+from collections.abc import Generator
+from contextlib import contextmanager
+from os import listdir
 from pathlib import Path
+from random import choice
 
 import pandas as pd
 import streamlit as st
-from styler import Styler
-from streamlit.delta_generator import DeltaGenerator
 from mpd import MPDClient
-from contextlib import contextmanager
-from collections.abc import Generator
-from random import choice
-from os import listdir
-
+from streamlit.delta_generator import DeltaGenerator
+from styler import Styler
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
@@ -127,7 +126,8 @@ class ZenMPD:
         with get_mdp_client() as client:
             if chosen := ZenMPD._choose_random_album(client):
                 client.clear()
-                client.add(chosen)
+                for file_ in ZenMPD._get_library_files(chosen):
+                    client.add(file_)
                 client.play(0)
 
     @staticmethod
