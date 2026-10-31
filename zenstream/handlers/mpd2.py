@@ -119,8 +119,8 @@ class ZenMPD:
         while count < 100 and not chosen:
             candidate = choice(all_files)
             if file_name := candidate.get("file"):
-                chosen = file_name.split("/", maxsplit=2)
-                chosen = "/".join(chosen)
+                chosen = file_name.split("/")
+                chosen = MUSIC_DIR + "/".join(chosen[:-1])
             count += 1
         return chosen
 
@@ -137,7 +137,8 @@ class ZenMPD:
     def addrandomalbum():
         with get_mdp_client() as client:
             if chosen := ZenMPD._choose_random_album(client):
-                client.add(chosen)
+                for file_ in ZenMPD._get_library_files(chosen):
+                    client.add(file_)
 
     @staticmethod
     def _get_folder_art(file_path: str) -> str | None:
@@ -335,13 +336,13 @@ class MPD2:
 
         Styler.add_button(
             cols[1],
-            "Add ➕",
+            "Add",
             ":material/add_to_queue:",
             lambda: MPD2._mpd_command("add", output_container, folder=folder),
         )
         Styler.add_button(
             cols[2],
-            "Replace ❇️",
+            "Replace",
             ":material/replace_audio:",
             lambda: MPD2._mpd_command("replace", output_container, folder=folder),
         )

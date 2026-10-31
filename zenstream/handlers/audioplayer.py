@@ -26,7 +26,7 @@ class AudioPlayer:
         """Display the audio player, metadata and cover image."""
 
         st.header("Audio Player")
-        st.audio(file_name, autoplay=True)
+        st.audio(file_name, autoplay=False)
 
         if get_ext(file_name) == "mp3":
             st.markdown("**Metadata**")
