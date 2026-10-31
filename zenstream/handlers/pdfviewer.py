@@ -1,6 +1,6 @@
 from os.path import sep
 
-import pandas as pd
+from pandas import DataFrame
 import streamlit as st
 import tabula
 from styler import Styler
@@ -16,7 +16,7 @@ class PDFViewer:
 
         st.pdf(lines)
 
-        dataframes: list[pd.DataFrame] = tabula.read_pdf(
+        dataframes: list[DataFrame] = tabula.read_pdf(
             file_name, pages="all", multiple_tables=True
         )
         if len(dataframes) > 0:

@@ -10,7 +10,7 @@ NUM_COLUMNS = 5
 class Styler:
     @staticmethod
     def show_dict(subheader: str, data: dict):
-        formatted_data = {f":blue[{k.title()}]": v for k, v in data.items()}
+        formatted_data = {f":blue[{k.title()}]": str(v) for k, v in data.items()}
         final_data = {
             f":yellow[{subheader}]": list(formatted_data.keys()),
             "🟢": list(formatted_data.values()),
