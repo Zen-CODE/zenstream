@@ -15,6 +15,8 @@ from state import State
 from streamlit.delta_generator import DeltaGenerator
 from styler import NUM_COLUMNS, Styler
 
+ENABLE_MPD = False
+
 
 class ZenStream:
     @staticmethod
@@ -192,7 +194,8 @@ class ZenStream:
         if file_name := st.query_params.get("file_name"):
             EditFile.edit_file(file_name)
         else:
-            MPD2.show_actions(ZenStream.get_current_folder())
+            if ENABLE_MPD:
+                MPD2.show_actions(ZenStream.get_current_folder())
             ZenStream.add_path()
             with st.spinner("Loading folder..."):
                 ZenStream.listing()
