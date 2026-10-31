@@ -9,6 +9,7 @@ import streamlit as st
 from mpd import MPDClient
 from streamlit.delta_generator import DeltaGenerator
 from styler import Styler
+from handlers.audiofile import AudioFile
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
@@ -164,6 +165,16 @@ class ZenMPD:
             playlist_info = client.playlistinfo()
             current_id = client.currentsong().get("id")
         return playlist_info, current_id
+
+    @staticmethod
+    def get_status() -> dict:
+        with get_mdp_client() as client:
+            return client.status()
+
+    @staticmethod
+    def get_currentsong() -> dict:
+        with get_mdp_client() as client:
+            return client.currentsong()
 
 
 class MPD2:
@@ -359,7 +370,6 @@ class MPD2:
 
     @staticmethod
     def show_actions(folder: str):
-        # display_folder = folder.replace(MUSIC_DIR, "")
         with st.expander("🔊 MPD", expanded=True):
             # st.subheader(f"📁 {display_folder}")
             button_container = st.container()
@@ -368,8 +378,20 @@ class MPD2:
             with button_container:
                 MPD2._add_play_buttons(output_container, folder)
                 MPD2.add_playlist_buttons(playlist_container, folder)
-                tabs = st.tabs(["Now Playing", "Playlist"])
+                tabs = st.tabs(["Now Playing", "Playlist", "Meta"])
                 with tabs[0]:
                     MPD2._mpd_command("nowplaying", st.container())
                 with tabs[1]:
                     MPD2._mpd_command("playlist", st.container())
+                with tabs[2]:
+                    if song_file := ZenMPD.get_currentsong().get("file"):
+                        file_name = MUSIC_DIR + song_file
+                        meta = AudioFile.get_mp3_meta(file_name)
+                        Styler.show_dict("Metadata", meta)
+                        id3 = AudioFile.get_id3_tag(file_name)
+                        if id3:
+                            Styler.show_dict("ID3 Tag", id3)
+                        else:
+                            st.warning(f"No ID3 data for {file_name}")
+                    else:
+                        st.warning("No song is currently playing.")

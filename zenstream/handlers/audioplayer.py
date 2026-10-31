@@ -2,28 +2,16 @@ from glob import glob
 from os import sep
 
 import streamlit as st
-from mutagen import File
 
 from styler import Styler
 from utils import get_ext
-from zenstream.handlers.audiofile import AudioFile
+from handlers.audiofile import AudioFile
 
 
 class AudioPlayer:
     @staticmethod
     def _show_meta(file_name: str):
-        info: File = File(file_name).info
-        parts = file_name.split(sep)
-        data = {
-            "Artist": parts[-3],
-            "Album": parts[-2],
-            "Track": parts[-1],
-            "Length": f"{int(info.length // 60)}m {int(info.length % 60)}s",
-            "Bitrate": f"{info.bitrate // 1000}kbps",
-            "Bitrate mode": AudioPlayer._get_bitrate(info),
-            "Channels": info.channels,
-            "Sample_rate": f"{info.sample_rate}hz",
-        }
+        data = AudioFile.get_mp3_meta(file_name)
         Styler.show_dict("Track Metadata", data)
 
         if get_ext(file_name) == "mp3":
@@ -44,17 +32,6 @@ class AudioPlayer:
             st.markdown("**Metadata**")
             AudioPlayer._show_meta(file_name)
             AudioPlayer._show_cover(file_name)
-
-    @staticmethod
-    def _get_bitrate(info_obj: File) -> str:
-        """
-        Return the bitrate description given the mutagen bitrate object.
-        """
-        bitrate_mode = getattr(info_obj, "bitrate_mode", None)
-        if bitrate_mode is None:
-            return "unknown"
-        val = int(bitrate_mode)
-        return ["Unknown", "CBR", "VBR", "ABR"][val]
 
     @staticmethod
     def _show_cover(file_name: str):
