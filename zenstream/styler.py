@@ -10,14 +10,13 @@ NUM_COLUMNS = 5
 class Styler:
     @staticmethod
     def show_dict(subheader: str, data: dict):
-        st.subheader(subheader)
+        formatted_data = {f":blue[{k.title()}]": v for k, v in data.items()}
+        final_data = {
+            f":yellow[{subheader}]": list(formatted_data.keys()),
+            "🟢": list(formatted_data.values()),
+        }
 
-        cols = st.columns([0.1, 0.9])
-        for prop, value in data.items():
-            with cols[0]:
-                st.markdown(f"**{prop}:**")
-            with cols[1]:
-                st.markdown(f"*{value}*")
+        st.table(final_data, border="horizontal")
 
     @staticmethod
     def add_button(

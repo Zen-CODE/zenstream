@@ -28,7 +28,7 @@ class AudioFile:
             "Bitrate": f"{info.bitrate // 1000}kbps",
             "Bitrate mode": AudioFile._get_bitrate(info),
             "Channels": info.channels,
-            "Sample_rate": f"{info.sample_rate}hz",
+            "Sample rate": f"{info.sample_rate}hz",
         }
 
     @staticmethod

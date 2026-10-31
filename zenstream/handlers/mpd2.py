@@ -10,6 +10,8 @@ from mpd import MPDClient
 from streamlit.delta_generator import DeltaGenerator
 from styler import Styler
 from handlers.audiofile import AudioFile
+from state import State
+
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
@@ -186,6 +188,13 @@ class MPD2:
         return MUSIC_DIR + path
 
     @staticmethod
+    def set_current_file() -> None:
+        song = ZenMPD.get_currentsong()
+        if lib_name := song.get("file"):
+            State.set("current_folder", str(Path(MUSIC_DIR + lib_name).parent))
+            State.set("current_file", MUSIC_DIR + lib_name)
+
+    @staticmethod
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         match command:
             case "add":
@@ -225,31 +234,17 @@ class MPD2:
                 status, song, albumart = ZenMPD.nowplaying()
                 cols = container.columns(2)
                 with cols[0]:
-                    product_data = {
-                        "🟢": [
-                            ":blue[Artist]",
-                            ":blue[Album]",
-                            ":blue[Track]",
-                            ":blue[File]",
-                            ":blue[Progress]",
-                            ":blue[Position]",
-                            ":blue[Volume]",
-                            ":blue[State]",
-                            ":blue[ID]",
-                        ],
-                        "": [
-                            song.get("artist"),
-                            song.get("album"),
-                            song.get("title"),
-                            song.get("file", ""),
-                            f"{status.get('elapsed')} / {song.get('duration')}",
-                            song.get("pos", 0),
-                            status.get("volume", 0),
-                            status.get("state", "-"),
-                            song.get("id", 0),
-                        ],
+                    data = {
+                        "artist": song.get("artist"),
+                        "Album": song.get("album"),
+                        "Track": song.get("title"),
+                        "File": song.get("file", ""),
+                        "Progress": f"{status.get('elapsed')} / {song.get('duration')}",
+                        "Position": song.get("pos", 0),
+                        "Volume": status.get("volume", 0),
+                        "State": status.get("state", "-"),
                     }
-                    st.table(product_data, border="horizontal")
+                    Styler.show_dict("Now Playing", data)
                 with cols[1]:
                     if isinstance(albumart, str):
                         st.image(albumart, "Album Art")
@@ -333,7 +328,7 @@ class MPD2:
 
     @staticmethod
     def add_playlist_buttons(output_container: DeltaGenerator, folder: str):
-        cols = st.columns([1] * 6)
+        cols = st.columns([1] * 7)
         short_folder = folder.replace(MUSIC_DIR, "")
         with cols[0]:
             st.markdown(f"📁 {short_folder}")
@@ -367,6 +362,9 @@ class MPD2:
             ),
         )
         Styler.add_button(cols[5], "♻️", ":material/recycling:", lambda: None)
+        Styler.add_button(
+            cols[6], "Set as current", ":material/bolt:", MPD2.set_current_file
+        )
 
     @staticmethod
     def show_actions(folder: str):
