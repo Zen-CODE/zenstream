@@ -81,7 +81,7 @@ class MPD2:
                 with cols[1]:
                     if isinstance(albumart, str):
                         st.image(albumart, "Album Art")
-                    elif "binary" in albumart:
+                    elif albumart and ("binary" in albumart):
                         image_bytes = albumart["binary"]
                         st.image(image_bytes, "Album Art")
                     else:
