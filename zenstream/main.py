@@ -15,7 +15,7 @@ from state import State
 from streamlit.delta_generator import DeltaGenerator
 from styler import NUM_COLUMNS, Styler
 
-ENABLE_MPD = False
+ENABLE_MPD = True
 
 
 class ZenStream:

@@ -1,12 +1,14 @@
-from mpd import MPDClient
 from os import listdir
-from random import choice
 from pathlib import Path
+from random import choice
+
+from mpd import MPDClient
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
 
 class ZenMPD:
+    version: str = "0.1"
     client: MPDClient | None = None
 
     @staticmethod
@@ -24,12 +26,12 @@ class ZenMPD:
                 # Verify connection is alive
                 ZenMPD.client.ping()
             # except (ConnectionError, BrokenPipeError, OSError):
-            except Exception as e:
+            except Exception as e:  # noqa BL001
                 print(f"ZenMPD: Error pinging MPDClient: {e}")
                 try:
                     ZenMPD.client.disconnect()
-                except Exception:
-                    pass
+                except Exception as e:  # noqa BL001
+                    print(f"ZenMPD: Error disconnecting MPDClient: {e}")
                 ZenMPD.client.connect("localhost", 6600)
         return ZenMPD.client
 
@@ -38,7 +40,7 @@ class ZenMPD:
         top_level = bool(existing is None)
         files = [] if top_level else existing
         for f in sorted(listdir(folder), reverse=False):
-            file_path = Path("/".join([folder, f]))
+            file_path = Path(f"/{folder}/{f}")
             if file_path.is_dir():
                 ZenMPD._get_library_files(str(file_path), existing=files)
             else:
@@ -56,6 +58,7 @@ class ZenMPD:
     @staticmethod
     def replace(folder: str):
         client = ZenMPD._ensure_client()
+        client.stop()
         client.clear()
         for lib_file in ZenMPD._get_library_files(folder):
             client.add(lib_file)
@@ -69,6 +72,18 @@ class ZenMPD:
             client.pause(0)
         elif status.get("state") != "play":
             client.play(int(status.get("song", 0)))
+
+    @staticmethod
+    def playpause():
+        client = ZenMPD._ensure_client()
+        status = client.status()
+        match status.get("state"):
+            case "play":
+                client.pause(1)
+            case "pause":
+                client.pause(0)
+            case _:
+                client.play(int(status.get("song", 0)))
 
     @staticmethod
     def pause():
@@ -115,8 +130,9 @@ class ZenMPD:
         while count < 100 and not chosen:
             candidate = choice(all_files)
             if file_name := candidate.get("file"):
-                chosen = file_name.split("/")
-                chosen = MUSIC_DIR + "/".join(chosen[:-1])
+                test_chosen = file_name.split("/")
+                if len(test_chosen) > 1:
+                    chosen = MUSIC_DIR + "/".join(chosen[:-1])
             count += 1
         return chosen
 
@@ -124,10 +140,15 @@ class ZenMPD:
     def playrandomalbum():
         client = ZenMPD._ensure_client()
         if chosen := ZenMPD._choose_random_album(client):
-            client.clear()
-            for file_ in ZenMPD._get_library_files(chosen):
-                client.add(file_)
-            client.play(0)
+            files = ZenMPD._get_library_files(chosen)
+            if files:
+                client.stop()
+                client.clear()
+                for file_ in files:
+                    client.add(file_)
+                client.play(0)
+            else:
+                raise ValueError(f"Not files found to load from: {chosen}")
 
     @staticmethod
     def addrandomalbum():
@@ -174,3 +195,14 @@ class ZenMPD:
     def get_currentsong() -> dict:
         client = ZenMPD._ensure_client()
         return client.currentsong()
+
+    @staticmethod
+    def disconnect_client():
+        """Initialise the connected client"""
+        if ZenMPD.client is not None:
+            try:
+                ZenMPD.client.close()
+                ZenMPD.client.disconnect()
+            except:  # noqa BL001
+                pass
+            ZenMPD.client = None
