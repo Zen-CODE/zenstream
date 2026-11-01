@@ -133,7 +133,7 @@ class ZenMPD:
             if file_name := candidate.get("file"):
                 test_chosen = file_name.split("/")
                 if len(test_chosen) > 1:
-                    chosen = MUSIC_DIR + "/".join(chosen[:-1])
+                    chosen = MUSIC_DIR + "/".join(test_chosen[:-1])
             count += 1
         return chosen
 
