@@ -8,7 +8,7 @@ MUSIC_DIR = "/home/richard/Zen/Music/"
 
 
 class ZenMPD:
-    version: str = "0.1"
+    version: str = "0.2"
     client: MPDClient | None = None
 
     @staticmethod
@@ -40,14 +40,15 @@ class ZenMPD:
         top_level = bool(existing is None)
         files = [] if top_level else existing
         for f in sorted(listdir(folder), reverse=False):
-            file_path = Path(f"/{folder}/{f}")
+            file_path = Path(f"{folder}/{f}")
             if file_path.is_dir():
                 ZenMPD._get_library_files(str(file_path), existing=files)
             else:
                 ext = f.split(".")[-1].lower()
                 if ext in ["mp3", "flac", "wav", "m4a"]:
                     files.append(str(file_path))
-        return [fname.replace(MUSIC_DIR, "") for fname in files]
+        if top_level:
+            return [fname.replace(MUSIC_DIR, "") for fname in files]
 
     @staticmethod
     def add(folder: str):
