@@ -23,7 +23,9 @@ class ZenMPD:
             try:
                 # Verify connection is alive
                 ZenMPD.client.ping()
-            except (ConnectionError, BrokenPipeError, OSError):
+            # except (ConnectionError, BrokenPipeError, OSError):
+            except Exception as e:
+                print(f"ZenMPD: Error pinging MPDClient: {e}")
                 try:
                     ZenMPD.client.disconnect()
                 except Exception:
