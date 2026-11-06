@@ -200,6 +200,34 @@ class MPD2:
         )
 
     @staticmethod
+    def enhance_stats(stats: dict) -> dict:
+        """Format the items on the dict for presentation."""
+
+        def format_time(total_seconds: int | str) -> str:
+            total_seconds = int(total_seconds)
+            days = total_seconds // 86400
+            hours = (total_seconds % 86400) // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+
+            # Format with an f-string
+            if days > 0:
+                return f"{days}d {hours:02d}h {minutes:02d}m {seconds:02d}s"
+            if hours > 0:
+                return f"{hours:02d}h {minutes:02d}m {seconds:02d}s"
+            return f"{minutes:02d}m {seconds:02d}s"
+
+        return {
+            "Uptime": format_time(stats["uptime"]),
+            "Playtime": format_time(stats["playtime"]),
+            "Artists": stats["artists"],
+            "Albums": stats["albums"],
+            "Songs": stats["songs"],
+            "Total Playtime": format_time(stats["db_playtime"]),
+            # "DB Update": stats["db_update"]
+        }
+
+    @staticmethod
     def show_actions(folder: str):
         with st.expander("🔊 MPD", expanded=True):
             # st.subheader(f"📁 {display_folder}")
@@ -228,7 +256,8 @@ class MPD2:
                         st.warning("No song is currently playing.")
                 with tabs[3]:
                     stats: dict = ZenMPD.stats()
-                    Styler.show_dict("MPD Stats", stats)
+                    enh_stats = MPD2.enhance_stats(stats)
+                    Styler.show_dict("MPD Stats", enh_stats)
                     outputs: list = ZenMPD.outputs()
                     for i, output in enumerate(outputs):
                         Styler.show_dict(f"Outputs {i + 1}", output)
