@@ -229,3 +229,6 @@ class MPD2:
                 with tabs[3]:
                     stats: dict = ZenMPD.stats()
                     Styler.show_dict("MPD Stats", stats)
+                    outputs: list = ZenMPD.outputs()
+                    for i, output in enumerate(outputs):
+                        Styler.show_dict(f"Outputs {i + 1}", output)

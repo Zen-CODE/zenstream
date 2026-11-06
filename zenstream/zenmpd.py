@@ -130,6 +130,11 @@ class ZenMPD:
         return client.stats()
 
     @staticmethod
+    def outputs() -> dict:
+        client = ZenMPD._ensure_client()
+        return client.outputs()
+
+    @staticmethod
     def _choose_random_album(client: MPDClient) -> str | None:
         all_files = client.listall("/")
         chosen, count = None, 0
