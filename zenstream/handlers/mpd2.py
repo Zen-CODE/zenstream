@@ -209,7 +209,7 @@ class MPD2:
             with button_container:
                 MPD2._add_play_buttons(output_container, folder)
                 MPD2.add_playlist_buttons(playlist_container, folder)
-                tabs = st.tabs(["Now Playing", "Playlist", "Meta"])
+                tabs = st.tabs(["Now Playing", "Playlist", "Meta", "MPD Stats"])
                 with tabs[0]:
                     MPD2._mpd_command("nowplaying", st.container())
                 with tabs[1]:
@@ -226,3 +226,6 @@ class MPD2:
                             st.warning(f"No ID3 data for {file_name}")
                     else:
                         st.warning("No song is currently playing.")
+                with tabs[3]:
+                    stats: dict = ZenMPD.stats()
+                    Styler.show_dict("MPD Stats", stats)

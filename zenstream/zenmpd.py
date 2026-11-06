@@ -125,6 +125,11 @@ class ZenMPD:
         client.setvol(max(volume - 5, 0))
 
     @staticmethod
+    def stats() -> dict:
+        client = ZenMPD._ensure_client()
+        return client.stats()
+
+    @staticmethod
     def _choose_random_album(client: MPDClient) -> str | None:
         all_files = client.listall("/")
         chosen, count = None, 0
