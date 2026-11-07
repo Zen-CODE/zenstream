@@ -220,9 +220,9 @@ class MPD2:
         return {
             "Uptime": format_time(stats["uptime"]),
             "Playtime": format_time(stats["playtime"]),
-            "Artists": stats["artists"],
-            "Albums": stats["albums"],
-            "Songs": stats["songs"],
+            "Artists": f"{int(stats['artists']):,}",
+            "Albums": f"{int(stats['albums']):,}",
+            "Songs": f"{int(stats['songs']):,}",
             "Total Playtime": format_time(stats["db_playtime"]),
             # "DB Update": stats["db_update"]
         }
