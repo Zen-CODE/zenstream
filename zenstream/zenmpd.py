@@ -1,7 +1,8 @@
 from os import listdir
+from os.path import expanduser
 from pathlib import Path
 from random import choice
-
+from functools import lru_cache
 from mpd import MPDClient
 
 MUSIC_DIR = "/home/richard/Zen/Music/"
@@ -20,7 +21,7 @@ class ZenMPD:
         """
         if ZenMPD.client is None:
             ZenMPD.client = client = MPDClient()
-            client.connect("localhost", 6600)
+            client.connect("127.0.0.1", 6600)
         else:
             try:
                 # Verify connection is alive
@@ -139,6 +140,28 @@ class ZenMPD:
         client = ZenMPD._ensure_client()
         mounts = client.listmounts()
         return [mount for mount in mounts]
+
+    @lru_cache
+    @staticmethod
+    def music_directory() -> str | None:
+        """
+        Return the MPD config music_directory or None
+        Note:
+            This assumes the MPDClient is running locally as this is intended
+            as a local music player.
+        """
+        music_path: Path = Path(expanduser("~/.config/mpd/mpd.conf"))
+        if not music_path.exists():
+            music_path = Path("/etc/mpd.conf")
+            if not music_path.exists():
+                return None
+
+        for line in music_path.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("music_directory"):
+                return line.split('"', 2)[1]
+
+        return None
 
     @staticmethod
     def _choose_random_album(client: MPDClient) -> str | None:
