@@ -225,6 +225,7 @@ class MPD2:
             "Songs": f"{int(stats['songs']):,}",
             "Total Playtime": format_time(stats["db_playtime"]),
             # "DB Update": stats["db_update"]
+            "Mounts": str(ZenMPD.listmounts()),
         }
 
     @staticmethod

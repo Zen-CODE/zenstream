@@ -135,6 +135,12 @@ class ZenMPD:
         return client.outputs()
 
     @staticmethod
+    def listmounts() -> list[str]:
+        client = ZenMPD._ensure_client()
+        mounts = client.listmounts()
+        return [mount for mount in mounts]
+
+    @staticmethod
     def _choose_random_album(client: MPDClient) -> str | None:
         all_files = client.listall("/")
         chosen, count = None, 0
