@@ -38,7 +38,7 @@ class Action:
     exposing a `show_file(file_name)` method."""
 
     _ICONS: dict[str, list[str]] = {
-        ":material/audio_file:": ["mp3", "ogg", "wav"],
+        ":material/audio_file:": ["mp3", "ogg", "wav", "wma"],
         ":material/csv:": ["csv"],
         ":material/text_snippet:": ["txt", "md"],
         ":material/code:": ["py"],
