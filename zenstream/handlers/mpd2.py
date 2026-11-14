@@ -22,7 +22,7 @@ class MPD2:
 
     @staticmethod
     def set_current_file() -> None:
-        song = ZenMPD.get_currentsong()
+        song = ZenMPD.currentsong()
         if lib_name := song.get("file"):
             State.set("current_folder", str(Path(MUSIC_DIR + lib_name).parent))
             State.set("current_file", MUSIC_DIR + lib_name)
@@ -245,7 +245,7 @@ class MPD2:
                 with tabs[1]:
                     MPD2._mpd_command("playlist", st.container())
                 with tabs[2]:
-                    if song_file := ZenMPD.get_currentsong().get("file"):
+                    if song_file := ZenMPD.currentsong().get("file"):
                         file_name = MUSIC_DIR + song_file
                         meta = AudioFile.get_mp3_meta(file_name)
                         Styler.show_dict("Metadata", meta)
