@@ -14,6 +14,19 @@ from zenmpd import ZenMPD
 MUSIC_DIR = "/home/richard/Zen/Music/"
 
 
+# def safe_dataframe(df, label="DataFrame"):
+#     try:
+#         st.dataframe(df)
+#     except Exception as e:
+#         print(f"🚨 Arrow serialization failed on: {label}")
+#         # Automatically find columns with mixed types or unsupported objects
+#         for col in df.columns:
+#             types = df[col].dropna().apply(type).unique()
+#             if len(types) > 1 or object in types:
+#                 print(f" -> Column '{col}' contains types: {types}")
+#         raise e
+
+
 class MPD2:
     @staticmethod
     def convert_path(path: str) -> str:
@@ -30,38 +43,23 @@ class MPD2:
     @staticmethod
     def _mpd_command(command: str, container: DeltaGenerator, **kwargs):
         match command:
-            case "add":
-                ZenMPD.add(kwargs["folder"])
-                container.info(f"Added {kwargs['folder']}")
-            case "replace":
-                ZenMPD.replace(kwargs["folder"])
-                container.info(f"Replacing with {kwargs['folder']}")
-            case "play":
-                ZenMPD.play()
-                container.info("Play")
-            case "pause":
-                ZenMPD.pause()
-                container.info("Pause")
-            case "stop":
-                ZenMPD.stop()
-                container.info("Stop")
-            case "previous":
-                ZenMPD.previous()
-                container.info("Previous")
-            case "next":
-                ZenMPD.next()
-                container.info("Next")
+            case "add" | "replace":
+                getattr(ZenMPD, command)(kwargs["folder"])
+                container.info(f"{command.title()} {kwargs['folder']}")
+            case "play" | "pause" | "stop" | "previous" | "next":
+                getattr(ZenMPD, command)()
+                container.info(command.title())
             case "volup":
-                ZenMPD.volup()
+                getattr(ZenMPD, command)()
                 container.info("Volume up")
             case "voldown":
-                ZenMPD.voldown()
+                getattr(ZenMPD, command)()
                 container.info("Volume down")
             case "playrandomalbum":
-                ZenMPD.playrandomalbum()
+                getattr(ZenMPD, command)()
                 container.info("Playing random album")
             case "addrandomalbum":
-                ZenMPD.addrandomalbum()
+                getattr(ZenMPD, command)()
                 container.info("Adding random album")
             case "nowplaying":
                 status, song, albumart = ZenMPD.nowplaying()
@@ -108,7 +106,11 @@ class MPD2:
 
                 with container:
                     df = pd.DataFrame(playlist_data)
+                    df["Artist"] = df["Artist"].astype(str)
+                    # safe_dataframe(df, label="Music Playlist View")
                     st.table(df.style.apply(_highlight_current, axis=1))
+            case _:
+                container.error(f"Unrecognized mpd command: {command}")
 
     @staticmethod
     def _add_play_buttons(output_container: DeltaGenerator, folder: str):
