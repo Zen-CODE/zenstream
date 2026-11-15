@@ -152,7 +152,7 @@ class ZenMPD(MPDCore):
         folder_path = Path(MUSIC_DIR + file_path).parent
         for file_name in folder_path.iterdir():
             if file_name.is_file() and file_name.name.lower().endswith(
-                (".jpg", ".jpeg", ".png")
+                (".jpg", ".jpeg", ".png", ".gif")
             ):
                 return str(file_name)
         return None
