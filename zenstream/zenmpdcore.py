@@ -25,6 +25,7 @@ class MPDCore:
                 except Exception as e:  # noqa BL001
                     print(f"ZenMPD: Error disconnecting MPDClient: {e}")
                 MPDCore.client.connect("localhost", 6600)
+                print("ZenMPD: Client reconnected.")
         return MPDCore.client
 
     @staticmethod
